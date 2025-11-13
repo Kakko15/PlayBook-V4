@@ -1,0 +1,127 @@
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Roboto+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 144 20% 98.2%;
+    --foreground: 144 10% 10.4%;
+
+    --card: 144 20% 98.2%;
+    --card-foreground: 144 10% 10.4%;
+
+    --popover: 144 20% 98.2%;
+    --popover-foreground: 144 10% 10.4%;
+
+    --primary: 148 70% 36.3%;
+    --primary-foreground: 150 100% 96.1%;
+    --primary-container: 149 70% 90.6%;
+    --on-primary-container: 149 100% 11.2%;
+
+    --secondary: 150 15.6% 47.6%;
+    --secondary-foreground: 0 0% 100%;
+    --secondary-container: 150 25.1% 91.2%;
+    --on-secondary-container: 150 24.3% 18.2%;
+
+    --tertiary: 172 26.6% 41.2%;
+    --tertiary-foreground: 0 0% 100%;
+    --tertiary-container: 172 38.6% 90%;
+    --on-tertiary-container: 172 100% 10.6%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --destructive-container: 0 86.1% 91.8%;
+    --on-destructive-container: 0 100% 13.1%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+
+    --border: 144 11.1% 50.4%;
+    --input: 144 11.1% 50.4%;
+    --ring: 148 70% 36.3%;
+
+    --surface: 144 20% 98.2%;
+    --on-surface: 144 10% 10.4%;
+    --surface-variant: 144 11.8% 89.8%;
+    --on-surface-variant: 144 9.6% 27.8%;
+    --outline: 144 9.4% 45.7%;
+    --outline-variant: 144 11.1% 80.2%;
+
+    --radius: 1rem;
+  }
+
+  .dark {
+    --background: 144 12.1% 6.1%;
+    --foreground: 144 11.1% 89.8%;
+
+    --card: 144 12.1% 6.1%;
+    --card-foreground: 144 11.1% 89.8%;
+
+    --popover: 144 12.1% 6.1%;
+    --popover-foreground: 144 11.1% 89.8%;
+
+    --primary: 149 69.9% 79.2%;
+    --primary-foreground: 149 100% 16.3%;
+    --primary-container: 148 70.1% 31.2%;
+    --on-primary-container: 149 70% 90.6%;
+
+    --secondary: 150 24.8% 77.1%;
+    --secondary-foreground: 150 24.3% 18.2%;
+    --secondary-container: 150 15.6% 33.3%;
+    --on-secondary-container: 150 25.1% 91.2%;
+
+    --tertiary: 172 38.3% 75.9%;
+    --tertiary-foreground: 172 100% 10.6%;
+    --tertiary-container: 172 26.6% 26.5%;
+    --on-tertiary-container: 172 38.6% 90%;
+
+    --destructive: 0 100% 80.4%;
+    --destructive-foreground: 0 100% 18.2%;
+    --destructive-container: 0 100% 30.8%;
+    --on-destructive-container: 0 86.1% 91.8%;
+
+    --muted: 210 4% 15.9%;
+    --muted-foreground: 210 4% 64.9%;
+
+    --accent: 210 4% 15.9%;
+    --accent-foreground: 210 4% 98%;
+
+    --border: 144 9.4% 35.1%;
+    --input: 144 9.4% 35.1%;
+    --ring: 149 69.9% 79.2%;
+
+    --surface: 144 12.1% 6.1%;
+    --on-surface: 144 11.1% 89.8%;
+    --surface-variant: 144 9.6% 27.8%;
+    --on-surface-variant: 144 11.1% 80.2%;
+    --outline: 144 9.4% 54.3%;
+    --outline-variant: 144 9.6% 27.8%;
+
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Inter', 'Google Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Google Sans', 'Inter', sans-serif;
+  }
+}
