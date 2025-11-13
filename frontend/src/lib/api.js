@@ -117,6 +117,76 @@ const api = {
     const { data } = await apiClient.post('/auth/oauth/discord', { code });
     return data;
   },
+
+  createTournament: async (tournamentData) => {
+    const { data } = await apiClient.post('/tournaments', tournamentData);
+    return data;
+  },
+  getMyTournaments: async () => {
+    const { data } = await apiClient.get('/tournaments/my-tournaments');
+    return data;
+  },
+  getTournamentById: async (tournamentId) => {
+    const { data } = await apiClient.get(`/tournaments/${tournamentId}`);
+    return data;
+  },
+  updateTournament: async (tournamentId, updates) => {
+    const { data } = await apiClient.put(
+      `/tournaments/${tournamentId}`,
+      updates
+    );
+    return data;
+  },
+  deleteTournament: async (tournamentId) => {
+    const { data } = await apiClient.delete(`/tournaments/${tournamentId}`);
+    return data;
+  },
+  getTeams: async (tournamentId) => {
+    const { data } = await apiClient.get(`/tournaments/${tournamentId}/teams`);
+    return data;
+  },
+  addTeam: async (tournamentId, teamData) => {
+    const { data } = await apiClient.post(
+      `/tournaments/${tournamentId}/teams`,
+      teamData
+    );
+    return data;
+  },
+  updateTeam: async (teamId, teamData) => {
+    const { data } = await apiClient.put(
+      `/tournaments/teams/${teamId}`,
+      teamData
+    );
+    return data;
+  },
+  deleteTeam: async (teamId) => {
+    const { data } = await apiClient.delete(`/tournaments/teams/${teamId}`);
+    return data;
+  },
+  getPlayers: async (teamId) => {
+    const { data } = await apiClient.get(
+      `/tournaments/teams/${teamId}/players`
+    );
+    return data;
+  },
+  addPlayer: async (teamId, playerData) => {
+    const { data } = await apiClient.post(
+      `/tournaments/teams/${teamId}/players`,
+      playerData
+    );
+    return data;
+  },
+  updatePlayer: async (playerId, playerData) => {
+    const { data } = await apiClient.put(
+      `/tournaments/players/${playerId}`,
+      playerData
+    );
+    return data;
+  },
+  deletePlayer: async (playerId) => {
+    const { data } = await apiClient.delete(`/tournaments/players/${playerId}`);
+    return data;
+  },
 };
 
 export default api;

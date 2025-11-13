@@ -20,6 +20,7 @@ import GoogleCallbackPage from './pages/Auth/GoogleCallbackPage';
 
 import AdminLayout from './pages/Dashboard/AdminLayout';
 import AdminDashboard from './pages/Dashboard/AdminDashboard';
+import TournamentWorkspace from './pages/Dashboard/TournamentWorkspace';
 
 import SuperAdminLayout from './pages/SuperAdmin/SuperAdminLayout';
 import SuperAdminDashboard from './pages/SuperAdmin/SuperAdminDashboard';
@@ -157,6 +158,14 @@ function App() {
               element={
                 <PageLayout>
                   <AdminDashboard />
+                </PageLayout>
+              }
+            />
+            <Route
+              path='tournament/:id'
+              element={
+                <PageLayout>
+                  <TournamentWorkspace />
                 </PageLayout>
               }
             />
