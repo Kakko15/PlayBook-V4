@@ -138,12 +138,15 @@ const api = {
     );
     return data;
   },
-  googleOAuthLogin: async (code) => {
-    const { data } = await apiClient.post('/auth/oauth/google', { code });
+  googleOAuthLogin: async (code, from) => {
+    const { data } = await apiClient.post('/auth/oauth/google', { code, from });
     return data;
   },
-  discordLogin: async (code) => {
-    const { data } = await apiClient.post('/auth/oauth/discord', { code });
+  discordLogin: async (code, from) => {
+    const { data } = await apiClient.post('/auth/oauth/discord', {
+      code,
+      from,
+    });
     return data;
   },
 

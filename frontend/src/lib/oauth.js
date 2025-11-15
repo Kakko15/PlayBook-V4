@@ -17,11 +17,12 @@ export const buildGoogleOAuthUrl = (from = 'login') => {
  * Build Discord OAuth URL
  * @returns {string} Discord OAuth URL
  */
-export const buildDiscordOAuthUrl = () => {
+export const buildDiscordOAuthUrl = (from = 'login') => {
   const redirectUri = encodeURIComponent(
     `${window.location.origin}/auth/callback/discord`
   );
-  return `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20email`;
+  const state = encodeURIComponent(JSON.stringify({ from }));
+  return `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${redirectUri}&response_type=code&scope=identify%20email&state=${state}`;
 };
 
 /**

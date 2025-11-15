@@ -35,6 +35,9 @@ export const useOAuthCallback = (oauthApiCall, providerName = 'OAuth') => {
     const handleCallback = async () => {
       const code = searchParams.get('code');
       const error = searchParams.get('error');
+      const state = searchParams.get('state');
+      const stateData = state ? JSON.parse(decodeURIComponent(state)) : {};
+      const from = stateData.from || 'login';
 
       if (error) {
         toast.error(`${providerName} authentication cancelled.`);
@@ -49,7 +52,7 @@ export const useOAuthCallback = (oauthApiCall, providerName = 'OAuth') => {
       }
 
       try {
-        const data = await oauthApiCall(code);
+        const data = await oauthApiCall(code, from);
 
         if (data.requiresApproval) {
           toast.success(data.message);
@@ -75,7 +78,7 @@ export const useOAuthCallback = (oauthApiCall, providerName = 'OAuth') => {
           error.response?.data?.message ||
             `${providerName} authentication failed.`
         );
-        navigate('/login');
+        navigate(from === 'signup' ? '/signup' : '/login');
       }
     };
 

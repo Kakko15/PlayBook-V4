@@ -56,6 +56,15 @@ export const AuthProvider = ({ children }) => {
         }
       }
       setLoading(false);
+
+      const loader = document.getElementById('initial-loader');
+      if (loader) {
+        loader.style.opacity = '0';
+        loader.style.visibility = 'hidden';
+        setTimeout(() => {
+          loader.style.display = 'none';
+        }, 300);
+      }
     };
 
     initializeApp();

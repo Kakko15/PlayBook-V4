@@ -5,7 +5,7 @@ import { redirectToGoogleOAuth, redirectToDiscordOAuth } from '@/lib/oauth';
 
 const OAuthButtons = ({ disabled = false, from = 'login' }) => {
   const handleGoogleClick = () => redirectToGoogleOAuth(from);
-  const handleDiscordClick = () => redirectToDiscordOAuth();
+  const handleDiscordClick = () => redirectToDiscordOAuth(from);
 
   return (
     <div className='mt-6 grid grid-cols-2 gap-4'>

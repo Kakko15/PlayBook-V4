@@ -54,7 +54,7 @@ function App() {
   const location = useLocation();
 
   if (loading) {
-    return <Loader />;
+    return null;
   }
 
   return (

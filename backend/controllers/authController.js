@@ -247,7 +247,7 @@ export const verifyEmail = async (req, res, next) => {
 };
 
 export const googleOAuth = async (req, res, next) => {
-  const { credential, code } = req.body;
+  const { credential, code, from } = req.body;
 
   if (!credential && !code) {
     return res
@@ -290,6 +290,12 @@ export const googleOAuth = async (req, res, next) => {
     if (findError) return next(findError);
 
     if (!user) {
+      if (from === "login") {
+        return res.status(404).json({
+          message: "No account found with this email. Please sign up first.",
+        });
+      }
+
       const { data: newUser, error: createError } = await supabase
         .from("users")
         .insert({
@@ -318,6 +324,12 @@ export const googleOAuth = async (req, res, next) => {
         message:
           "Registration request successful. Awaiting administrator approval.",
         requiresApproval: true,
+      });
+    }
+
+    if (from === "signup") {
+      return res.status(409).json({
+        message: "An account with this email already exists. Please log in.",
       });
     }
 
@@ -361,7 +373,7 @@ export const googleOAuth = async (req, res, next) => {
 };
 
 export const discordOAuth = async (req, res, next) => {
-  const { code } = req.body;
+  const { code, from } = req.body;
   if (!code) {
     return res.status(400).json({ message: "Discord code is required." });
   }
@@ -410,6 +422,12 @@ export const discordOAuth = async (req, res, next) => {
     if (findError) return next(findError);
 
     if (!user) {
+      if (from === "login") {
+        return res.status(404).json({
+          message: "No account found with this email. Please sign up first.",
+        });
+      }
+
       const { data: newUser, error: createError } = await supabase
         .from("users")
         .insert({
@@ -438,6 +456,12 @@ export const discordOAuth = async (req, res, next) => {
         message:
           "Registration request successful. Awaiting administrator approval.",
         requiresApproval: true,
+      });
+    }
+
+    if (from === "signup") {
+      return res.status(409).json({
+        message: "An account with this email already exists. Please log in.",
       });
     }
 
