@@ -29,7 +29,7 @@ export const generateRoundRobin = (teamIds) => {
   return schedule;
 };
 
-export const calculateElo = (eloA, eloB, scoreA, k = 32) => {
+export const calculateElo = (eloA, eloB, scoreA, k) => {
   const expectedA = 1 / (1 + Math.pow(10, (eloB - eloA) / 400));
   const expectedB = 1 / (1 + Math.pow(10, (eloA - eloB) / 400));
 

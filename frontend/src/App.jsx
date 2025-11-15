@@ -13,6 +13,7 @@ import PublicTournamentViewerPage from '@/pages/Public/PublicTournamentViewerPag
 import LoginPage from '@/pages/Auth/LoginPage';
 import SignupPage from '@/pages/Auth/SignupPage';
 import PendingApprovalPage from '@/pages/Auth/PendingApprovalPage';
+import CheckEmailPage from '@/pages/Auth/CheckEmailPage';
 import OtpSetupPage from '@/pages/Auth/OtpSetupPage';
 import OtpVerifyPage from '@/pages/Auth/OtpVerifyPage';
 import ResetPasswordPage from '@/pages/Auth/ResetPasswordPage';
@@ -110,6 +111,22 @@ function App() {
           />
           <Route
             path='/pending-approval'
+            element={
+              <PageLayout>
+                <PendingApprovalPage />
+              </PageLayout>
+            }
+          />
+          <Route
+            path='/check-email'
+            element={
+              <PageLayout>
+                <CheckEmailPage />
+              </PageLayout>
+            }
+          />
+          <Route
+            path='/verify-email'
             element={
               <PageLayout>
                 <PendingApprovalPage />

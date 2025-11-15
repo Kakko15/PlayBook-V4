@@ -5,8 +5,12 @@ import { OAuth2Client } from "google-auth-library";
 import speakeasy from "speakeasy";
 import crypto from "crypto";
 import axios from "axios";
-import { sendPasswordResetEmail } from "../utils/emailService.js";
+import {
+  sendPasswordResetEmail,
+  sendVerificationEmail,
+} from "../utils/emailService.js";
 import { validatePassword } from "../utils/validation.js";
+import { sanitize } from "../utils/sanitize.js";
 
 const googleClient = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -39,7 +43,7 @@ const generateJwt = (user) => {
     iat: Math.floor(Date.now() / 1000),
   };
   return jwt.sign(payload, JWT_SECRET, {
-    expiresIn: "1h",
+    expiresIn: "7d",
   });
 };
 
@@ -87,15 +91,20 @@ export const signup = async (req, res) => {
     }
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const tokenHash = hashToken(verificationToken);
+    const expiresAt = new Date(Date.now() + 24 * 3600000); // 24 hours
 
     const { data: newUser, error: insertUserError } = await supabase
       .from("users")
       .insert({
-        name,
-        email,
+        name: sanitize(name),
+        email: sanitize(email),
         password_hash: passwordHash,
-        status: "pending",
+        status: "pending", // User is pending email verification
         role: "admin",
+        email_verification_token: tokenHash,
+        email_verification_expires: expiresAt.toISOString(),
       })
       .select("id")
       .single();
@@ -110,17 +119,11 @@ export const signup = async (req, res) => {
 
     if (insertProfileError) throw insertProfileError;
 
-    await supabase.rpc("log_activity", {
-      p_icon: "how_to_reg",
-      p_color: "text-green-600",
-      p_title: "New User Registered",
-      p_description: `${email} is pending approval.`,
-      p_user_id: newUser.id,
-    });
+    const verifyUrl = `${process.env.FRONTEND_URL}/verify-email?token=${verificationToken}`;
+    await sendVerificationEmail(sanitize(email), sanitize(name), verifyUrl);
 
     res.status(201).json({
-      message:
-        "Registration request successful. Awaiting administrator approval.",
+      message: "Registration successful. Please check your email to verify.",
     });
   } catch (error) {
     console.error("Signup Error:", error.message);
@@ -165,7 +168,10 @@ export const login = async (req, res) => {
 
     if (user.status !== "active") {
       let message = "Account is not active.";
-      if (user.status === "pending") message = "Account is pending approval.";
+      if (user.status === "pending")
+        message = "Please check your email to verify your account.";
+      if (user.status === "pending_approval")
+        message = "Account is pending administrator approval.";
       if (user.status === "suspended") message = "Account has been suspended.";
       return res.status(403).json({ message });
     }
@@ -189,6 +195,61 @@ export const login = async (req, res) => {
     res
       .status(500)
       .json({ message: "Server error during login.", error: error.message });
+  }
+};
+
+export const verifyEmail = async (req, res) => {
+  const { token } = req.query;
+  if (!token) {
+    return res.status(400).send("Verification token is required.");
+  }
+
+  const tokenHash = hashToken(token);
+
+  try {
+    const { data: user, error: findError } = await supabase
+      .from("users")
+      .select("id, email, email_verification_expires")
+      .eq("email_verification_token", tokenHash)
+      .eq("status", "pending")
+      .maybeSingle();
+
+    if (findError) throw findError;
+
+    if (!user || new Date() > new Date(user.email_verification_expires)) {
+      if (user) {
+        // Token is expired, delete user so they can sign up again
+        await supabase.from("users").delete().eq("id", user.id);
+      }
+      return res
+        .status(400)
+        .send("Invalid or expired verification link. Please sign up again.");
+    }
+
+    const { error: updateError } = await supabase
+      .from("users")
+      .update({
+        status: "pending_approval", // Now awaiting admin approval
+        email_verification_token: null,
+        email_verification_expires: null,
+      })
+      .eq("id", user.id);
+
+    if (updateError) throw updateError;
+
+    await supabase.rpc("log_activity", {
+      p_icon: "how_to_reg",
+      p_color: "text-green-600",
+      p_title: "New User Verified",
+      p_description: `User ${user.email} verified their email and is now pending approval.`,
+      p_user_id: user.id,
+    });
+
+    // Redirect to a frontend page
+    res.redirect(`${process.env.FRONTEND_URL}/pending-approval`);
+  } catch (error) {
+    console.error("Email Verification Error:", error.message);
+    res.status(500).send("Error verifying email.");
   }
 };
 
@@ -242,7 +303,7 @@ export const googleOAuth = async (req, res) => {
           name,
           email,
           google_id: googleId,
-          status: "pending",
+          status: "pending_approval", // Auto-verified email
           role: "admin",
         })
         .select("id")
@@ -269,11 +330,15 @@ export const googleOAuth = async (req, res) => {
 
     if (user.status !== "active") {
       let message = "Account is not active.";
-      if (user.status === "pending") message = "Account is pending approval.";
+      if (user.status === "pending")
+        message = "Please check your email to verify your account.";
+      if (user.status === "pending_approval")
+        message = "Account is pending administrator approval.";
       if (user.status === "suspended") message = "Account has been suspended.";
-      return res
-        .status(403)
-        .json({ message, requiresApproval: user.status === "pending" });
+      return res.status(403).json({
+        message,
+        requiresApproval: user.status === "pending_approval",
+      });
     }
 
     if (!user.google_id) {
@@ -362,7 +427,7 @@ export const discordOAuth = async (req, res) => {
           name: username,
           email,
           discord_id: discordId,
-          status: "pending",
+          status: "pending_approval", // Auto-verified email
           role: "admin",
         })
         .select("id")
@@ -389,11 +454,15 @@ export const discordOAuth = async (req, res) => {
 
     if (user.status !== "active") {
       let message = "Account is not active.";
-      if (user.status === "pending") message = "Account is pending approval.";
+      if (user.status === "pending")
+        message = "Please check your email to verify your account.";
+      if (user.status === "pending_approval")
+        message = "Account is pending administrator approval.";
       if (user.status === "suspended") message = "Account has been suspended.";
-      return res
-        .status(403)
-        .json({ message, requiresApproval: user.status === "pending" });
+      return res.status(403).json({
+        message,
+        requiresApproval: user.status === "pending_approval",
+      });
     }
 
     if (!user.discord_id) {
@@ -730,8 +799,8 @@ export const updateAccountDetails = async (req, res) => {
 
   try {
     const updates = {};
-    if (name) updates.name = name;
-    if (email) updates.email = email;
+    if (name) updates.name = sanitize(name);
+    if (email) updates.email = sanitize(email);
 
     if (email) {
       const { data: existingUser, error: checkError } = await supabase
@@ -846,9 +915,9 @@ export const updateProfile = async (req, res) => {
   const { pronouns, about_me, phone } = req.body;
 
   const updates = {};
-  if (pronouns !== undefined) updates.pronouns = pronouns;
-  if (about_me !== undefined) updates.about_me = about_me;
-  if (phone !== undefined) updates.phone = phone;
+  if (pronouns !== undefined) updates.pronouns = sanitize(pronouns);
+  if (about_me !== undefined) updates.about_me = sanitize(about_me);
+  if (phone !== undefined) updates.phone = sanitize(phone);
 
   if (Object.keys(updates).length === 0) {
     return res.status(400).json({ message: "No fields to update." });
@@ -870,12 +939,18 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+const MAX_BASE64_SIZE = 7000000; // ~5MB (5 * 1024 * 1024 * 1.33)
+
 export const updateProfilePicture = async (req, res) => {
   const { userId } = req.user;
   const { imageBase64 } = req.body;
 
   if (!imageBase64) {
     return res.status(400).json({ message: "Image data is required." });
+  }
+
+  if (imageBase64.length > MAX_BASE64_SIZE) {
+    return res.status(413).json({ message: "Image file is too large." });
   }
 
   try {
@@ -929,6 +1004,10 @@ export const detectFace = async (req, res) => {
     return res.status(400).json({ message: "Image data is required." });
   }
 
+  if (imageBase64.length > MAX_BASE64_SIZE) {
+    return res.status(413).json({ message: "Image file is too large." });
+  }
+
   try {
     const base64Data = imageBase64.replace(
       /^data:image\/(png|jpeg|jpg);base64,/,
@@ -940,6 +1019,7 @@ export const detectFace = async (req, res) => {
     params.append("api_secret", apiSecret);
     params.append("image_base64", base64Data);
     params.append("return_attributes", "gender,age,facequality");
+    params.append("return_landmark", "1"); // Get facial landmarks for better validation
 
     const response = await axios.post(
       "https://api-us.faceplusplus.com/facepp/v3/detect",
@@ -963,18 +1043,42 @@ export const detectFace = async (req, res) => {
     const face = faces[0];
     const faceQuality = face.attributes?.facequality?.value || 0;
     const confidence = face.confidence || 0;
+    const age = face.attributes?.age?.value;
 
-    if (faceQuality < 50 || confidence < 75) {
+    console.log("Face detection result:", {
+      faceQuality,
+      confidence,
+      age,
+      threshold: face.attributes?.facequality?.threshold,
+    });
+
+    // Validate based on face quality only (confidence is often 0 from Face++ API)
+    // Quality threshold of 30 helps filter out animal faces
+    if (faceQuality < 30) {
       return res.status(200).json({
         faceFound: false,
-        message:
-          "Face quality is too low. Please use a clearer, well-lit photo.",
+        message: "Please upload a clear, well-lit photo of your face.",
       });
     }
 
+    // Additional check: age should be reasonable for a human (5-100)
+    if (age && (age < 5 || age > 100)) {
+      return res.status(200).json({
+        faceFound: false,
+        message: "Please upload a photo of a human face.",
+      });
+    }
+
+    // Accept the face
+    const isGoodQuality = faceQuality >= 70 && confidence >= 85;
+
     res.status(200).json({
       faceFound: true,
-      message: "Face detected successfully.",
+      message: isGoodQuality
+        ? "Face detected successfully."
+        : "Face detected. Quality could be better, but acceptable.",
+      quality: faceQuality,
+      confidence: confidence,
     });
   } catch (error) {
     console.error(

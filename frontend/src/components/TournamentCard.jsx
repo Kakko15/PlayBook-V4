@@ -41,7 +41,6 @@ const TournamentCard = ({ tournament, isPublic = false, className }) => {
 
   const onCardAction = (e) => {
     e.stopPropagation();
-    console.log('Card action clicked');
   };
 
   const handlePointerDown = (e) => {

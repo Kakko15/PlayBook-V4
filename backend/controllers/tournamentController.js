@@ -1,56 +1,104 @@
 import supabase from "../supabaseClient.js";
 import { generateRoundRobin, calculateElo } from "../utils/tournamentLogic.js";
+import { sanitize, sanitizeObject } from "../utils/sanitize.js";
 
 export const createTournament = async (req, res) => {
   const { name, game } = req.body;
   const ownerId = req.user.userId;
+
+  console.log("=== CREATE TOURNAMENT DEBUG ===");
+  console.log("Name:", name);
+  console.log("Game:", game);
+  console.log("Owner ID:", ownerId);
 
   if (!name || !game) {
     return res.status(400).json({ message: "Name and game are required." });
   }
 
   try {
+    // Create tournament directly without RPC function
+    console.log("Attempting to insert tournament...");
     const { data: tournament, error: tournamentError } = await supabase
       .from("tournaments")
       .insert({
-        name,
-        game,
-        owner_id: ownerId,
+        name: sanitize(name),
+        game: sanitize(game),
+        owner_id: ownerId, // Required field
       })
       .select()
       .single();
 
-    if (tournamentError) throw tournamentError;
+    console.log("Tournament insert result:", { tournament, tournamentError });
 
-    const { error: collaboratorError } = await supabase
+    if (tournamentError) {
+      console.error("Tournament insert error:", tournamentError);
+      console.error("Error code:", tournamentError.code);
+      console.error("Error message:", tournamentError.message);
+      console.error("Error details:", tournamentError.details);
+      console.error("Error hint:", tournamentError.hint);
+      return res.status(500).json({
+        message: "Error creating tournament.",
+        error: tournamentError.message,
+        details: tournamentError.details,
+        hint: tournamentError.hint,
+      });
+    }
+
+    if (!tournament) {
+      console.error("No tournament data returned");
+      return res
+        .status(500)
+        .json({ message: "Tournament creation failed to return data." });
+    }
+
+    console.log("Tournament created successfully:", tournament.id);
+
+    // Add the creator as a collaborator
+    console.log("Adding collaborator...");
+    const { data: collaborator, error: collaboratorError } = await supabase
       .from("collaborators")
       .insert({
         tournament_id: tournament.id,
         user_id: ownerId,
-      });
+        role: "owner",
+      })
+      .select();
 
-    if (collaboratorError) throw collaboratorError;
+    if (collaboratorError) {
+      console.error("Collaborator creation error:", collaboratorError);
+      console.error("Collaborator error code:", collaboratorError.code);
+      console.error("Collaborator error message:", collaboratorError.message);
+      console.error("Collaborator error details:", collaboratorError.details);
+      console.log(
+        "Continuing without collaborator entry (using owner_id instead)"
+      );
+      // Don't fail - we have owner_id in the tournament already
+    } else {
+      console.log("Collaborator added successfully:", collaborator);
+    }
 
-    await supabase.rpc("log_activity", {
-      p_icon: "emoji_events",
-      p_color: "text-yellow-600",
-      p_title: "Tournament Created",
-      p_description: `"${name}" was created.`,
-      p_tournament_id: tournament.id,
-      p_user_id: ownerId,
-    });
-
+    console.log("=== CREATE TOURNAMENT SUCCESS ===");
     res.status(201).json(tournament);
   } catch (error) {
-    console.error("Create Tournament Error:", error.message);
-    res.status(500).json({ message: "Error creating tournament." });
+    console.error("=== CREATE TOURNAMENT EXCEPTION ===");
+    console.error("Error:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+    res
+      .status(500)
+      .json({ message: "Error creating tournament.", error: error.message });
   }
 };
 
 export const getMyTournaments = async (req, res) => {
   const userId = req.user.userId;
+  console.log("=== GET MY TOURNAMENTS ===");
+  console.log("User ID:", userId);
+
   try {
-    const { data, error } = await supabase
+    // Try with collaborators first
+    console.log("Trying collaborators query...");
+    const { data: collabData, error: collabError } = await supabase
       .from("tournaments")
       .select(
         `
@@ -62,8 +110,38 @@ export const getMyTournaments = async (req, res) => {
       .eq("collaborators.user_id", userId)
       .order("created_at", { ascending: false });
 
+    console.log("Collaborators query result:", {
+      dataLength: collabData?.length,
+      error: collabError?.message,
+    });
+
+    // If collaborators query works AND has data, use it
+    if (!collabError && collabData && collabData.length > 0) {
+      console.log("Returning tournaments from collaborators query");
+      return res.status(200).json(collabData);
+    }
+
+    // Fallback: query by owner_id directly
+    console.log("Using owner_id fallback query...");
+    const { data, error } = await supabase
+      .from("tournaments")
+      .select(
+        `
+        id, name, game, start_date, end_date,
+        teams(count)
+      `
+      )
+      .eq("owner_id", userId)
+      .order("created_at", { ascending: false });
+
+    console.log("Owner_id query result:", {
+      dataLength: data?.length,
+      error: error?.message,
+    });
+
     if (error) throw error;
 
+    console.log("Returning tournaments from owner_id query");
     res.status(200).json(data);
   } catch (error) {
     console.error("Get My Tournaments Error:", error.message);
@@ -74,8 +152,13 @@ export const getMyTournaments = async (req, res) => {
 export const getTournamentById = async (req, res) => {
   const { id } = req.params;
   const userId = req.user.userId;
+  console.log("=== GET TOURNAMENT BY ID ===");
+  console.log("Tournament ID:", id);
+  console.log("User ID:", userId);
+
   try {
-    const { data, error } = await supabase
+    // Try with collaborators first
+    const { data: collabData, error: collabError } = await supabase
       .from("tournaments")
       .select(
         `
@@ -87,6 +170,20 @@ export const getTournamentById = async (req, res) => {
       .eq("collaborators.user_id", userId)
       .single();
 
+    if (!collabError && collabData) {
+      console.log("Tournament found via collaborators");
+      return res.status(200).json(collabData);
+    }
+
+    // Fallback: query by owner_id
+    console.log("Trying owner_id fallback...");
+    const { data, error } = await supabase
+      .from("tournaments")
+      .select("*")
+      .eq("id", id)
+      .eq("owner_id", userId)
+      .single();
+
     if (error) throw error;
     if (!data) {
       return res
@@ -94,6 +191,7 @@ export const getTournamentById = async (req, res) => {
         .json({ message: "Tournament not found or access denied." });
     }
 
+    console.log("Tournament found via owner_id");
     res.status(200).json(data);
   } catch (error) {
     console.error("Get Tournament By Id Error:", error.message);
@@ -106,8 +204,8 @@ export const updateTournament = async (req, res) => {
   const { name, game, startDate, endDate, registrationOpen } = req.body;
 
   const updates = {
-    name,
-    game,
+    name: sanitize(name),
+    game: sanitize(game),
     start_date: startDate,
     end_date: endDate,
     registration_open: registrationOpen,
@@ -175,8 +273,8 @@ export const addTeam = async (req, res) => {
     const { data, error } = await supabase
       .from("teams")
       .insert({
-        name,
-        logo_url: logo_url || null,
+        name: sanitize(name),
+        logo_url: sanitize(logo_url) || null,
         tournament_id: tournamentId,
       })
       .select()
@@ -188,7 +286,7 @@ export const addTeam = async (req, res) => {
       p_icon: "group_add",
       p_color: "text-blue-600",
       p_title: "New Team Added",
-      p_description: `"${name}" joined a tournament.`,
+      p_description: `"${sanitize(name)}" joined a tournament.`,
       p_tournament_id: tournamentId,
       p_user_id: userId,
     });
@@ -208,8 +306,8 @@ export const updateTeam = async (req, res) => {
     const { data, error } = await supabase
       .from("teams")
       .update({
-        name,
-        logo_url: logo_url || null,
+        name: sanitize(name),
+        logo_url: sanitize(logo_url) || null,
       })
       .eq("id", teamId)
       .select()
@@ -264,9 +362,9 @@ export const addPlayer = async (req, res) => {
     const { data, error } = await supabase
       .from("players")
       .insert({
-        name,
+        name: sanitize(name),
         team_id: teamId,
-        game_specific_data: game_specific_data || null,
+        game_specific_data: sanitizeObject(game_specific_data) || null,
       })
       .select()
       .single();
@@ -287,8 +385,8 @@ export const updatePlayer = async (req, res) => {
     const { data, error } = await supabase
       .from("players")
       .update({
-        name,
-        game_specific_data: game_specific_data || null,
+        name: sanitize(name),
+        game_specific_data: sanitizeObject(game_specific_data) || null,
       })
       .eq("id", playerId)
       .select()
@@ -559,7 +657,7 @@ export const logMatchResult = async (req, res) => {
     const { data: match, error: matchError } = await supabase
       .from("matches")
       .select(
-        "*, team1:teams!matches_team1_id_fkey(*), team2:teams!matches_team2_id_fkey(*)"
+        "*, tournament:tournaments!inner(*), team1:teams!matches_team1_id_fkey(*), team2:teams!matches_team2_id_fkey(*)"
       )
       .eq("id", match_id)
       .single();
@@ -575,17 +673,19 @@ export const logMatchResult = async (req, res) => {
 
     const team1 = match.team1;
     const team2 = match.team2;
+    const kFactor = match.tournament.k_factor || 32;
 
     const [newEloTeam1, newEloTeam2] = calculateElo(
       team1.elo_rating,
       team2.elo_rating,
-      team1_score > team2_score ? 1 : 0
+      team1_score > team2_score ? 1 : 0,
+      kFactor
     );
 
     const matchWinnerId = team1_score > team2_score ? team1.id : team2.id;
     const matchLoserId = team1_score < team2_score ? team1.id : team2.id;
 
-    await supabase.rpc("update_match_results", {
+    const { error: rpcError } = await supabase.rpc("atomic_log_match_result", {
       p_match_id: match_id,
       p_team1_id: team1.id,
       p_team2_id: team2.id,
@@ -599,69 +699,18 @@ export const logMatchResult = async (req, res) => {
       p_old_winner_id: oldWinnerId,
       p_old_loser_id: oldLoserId,
       p_match_date: match_date || match.match_date,
-      p_round_name: round_name || match.round_name,
-    });
-
-    await supabase
-      .from("teams")
-      .increment("win_streak", 1)
-      .eq("id", matchWinnerId);
-
-    await supabase
-      .from("teams")
-      .update({ win_streak: 0 })
-      .eq("id", matchLoserId);
-
-    if (match.next_match_id && match.winner_advances_to_slot) {
-      const update = {};
-      if (match.winner_advances_to_slot === "team1") {
-        update.team1_id = matchWinnerId;
-      } else {
-        update.team2_id = matchWinnerId;
-      }
-
-      await supabase
-        .from("matches")
-        .update(update)
-        .eq("id", match.next_match_id);
-    }
-
-    if (player_stats && player_stats.length > 0) {
-      const statsToUpsert = player_stats.map((stat) => ({
-        match_id: match_id,
-        player_id: stat.player_id,
-        stats: stat.stats,
-      }));
-
-      await supabase
-        .from("match_player_stats")
-        .delete()
-        .eq("match_id", match_id);
-
-      const { error: statsError } = await supabase
-        .from("match_player_stats")
-        .insert(statsToUpsert);
-      if (statsError) throw statsError;
-    }
-
-    const { error: predictionError } = await supabase.rpc(
-      "update_prediction_statuses",
-      {
-        p_match_id: match_id,
-        p_actual_winner_id: matchWinnerId,
-      }
-    );
-
-    if (predictionError) throw predictionError;
-
-    await supabase.rpc("log_activity", {
-      p_icon: "task_alt",
-      p_color: "text-gray-500",
-      p_title: "Match Result Logged",
-      p_description: `${team1.name} (${team1_score}) vs ${team2.name} (${team2_score})`,
+      p_round_name: sanitize(round_name) || match.round_name,
+      p_player_stats:
+        player_stats && player_stats.length > 0 ? player_stats : null,
       p_tournament_id: match.tournament_id,
       p_user_id: userId,
+      p_team1_name: team1.name,
+      p_team2_name: team2.name,
+      p_next_match_id: match.next_match_id,
+      p_winner_advances_to_slot: match.winner_advances_to_slot,
     });
+
+    if (rpcError) throw rpcError;
 
     res.status(200).json({ message: "Match result logged successfully." });
   } catch (error) {

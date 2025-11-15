@@ -1,15 +1,15 @@
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 const transporter = nodemailer.createTransport({
-  service: process.env.EMAIL_SERVICE || 'gmail',
+  service: process.env.EMAIL_SERVICE || "gmail",
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
@@ -75,8 +75,8 @@ const emailTemplate = (title, preheader, content) => {
 };
 
 export const sendApprovalEmail = async (userEmail, userName) => {
-  const title = 'Your PlayBook Account is Approved!';
-  const preheader = 'You can now log in and start managing tournaments.';
+  const title = "Your PlayBook Account is Approved!";
+  const preheader = "You can now log in and start managing tournaments.";
   const content = `
     <h2>Welcome to PlayBook, ${userName}!</h2>
     <p>Good news! Your administrator account for PlayBook has been reviewed and approved by a Super Admin.</p>
@@ -90,8 +90,8 @@ export const sendApprovalEmail = async (userEmail, userName) => {
 };
 
 export const sendPasswordResetEmail = async (userEmail, userName, resetUrl) => {
-  const title = 'Reset Your PlayBook Password';
-  const preheader = 'A request was made to reset your password.';
+  const title = "Reset Your PlayBook Password";
+  const preheader = "A request was made to reset your password.";
   const content = `
     <h2>Hi ${userName},</h2>
     <p>We received a request to reset the password for your PlayBook account. If you did not make this request, you can safely ignore this email.</p>
@@ -100,6 +100,21 @@ export const sendPasswordResetEmail = async (userEmail, userName, resetUrl) => {
       <a href="${resetUrl}" class="button">Reset Your Password</a>
     </div>
     <p style="font-size: 12px; text-align: center; margin-top: 24px; word-break: break-all;">If you're having trouble, copy and paste this URL into your browser:<br>${resetUrl}</p>
+  `;
+  const html = emailTemplate(title, preheader, content);
+  await sendEmail(userEmail, title, html);
+};
+
+export const sendVerificationEmail = async (userEmail, userName, verifyUrl) => {
+  const title = "Verify Your PlayBook Account";
+  const preheader = "One last step to get started with PlayBook.";
+  const content = `
+    <h2>Welcome to PlayBook, ${userName}!</h2>
+    <p>We're excited to have you on board. Please verify your email address by clicking the button below. This link will expire in 24 hours.</p>
+    <div class="button-container">
+      <a href="${verifyUrl}" class="button">Verify Your Email</a>
+    </div>
+    <p style="font-size: 12px; text-align: center; margin-top: 24px; word-break: break-all;">If you're having trouble, copy and paste this URL into your browser:<br>${verifyUrl}</p>
   `;
   const html = emailTemplate(title, preheader, content);
   await sendEmail(userEmail, title, html);

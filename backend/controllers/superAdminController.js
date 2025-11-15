@@ -17,7 +17,7 @@ export const getPendingUsers = async (req, res) => {
     const { data, error } = await supabase
       .from("users")
       .select("id, name, email, created_at")
-      .eq("status", "pending")
+      .eq("status", "pending_approval")
       .order("created_at", { ascending: true });
 
     if (error) throw error;

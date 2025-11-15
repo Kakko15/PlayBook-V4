@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import AvatarEditor from 'react-avatar-editor';
 import {
   Dialog,
@@ -31,9 +31,15 @@ const ProfilePictureManager = ({
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast.error('File is too large. Maximum size is 5MB.');
+        return;
+      }
       setImage(URL.createObjectURL(file));
       setMode('edit');
     }

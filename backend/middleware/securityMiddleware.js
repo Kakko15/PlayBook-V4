@@ -32,6 +32,9 @@ export const passwordResetLimiter = rateLimit({
   message: "Too many password reset requests, please try again after an hour.",
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req, res) => {
+    return req.body.email || req.ip; // Use email if available, fall back to IP
+  },
 });
 
 export const otpLimiter = rateLimit({

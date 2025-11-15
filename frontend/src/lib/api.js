@@ -5,7 +5,13 @@ const API_BASE_URL =
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true, // Send cookies with requests
+  xsrfCookieName: 'XSRF-TOKEN', // Name of the cookie to read
+  xsrfHeaderName: 'X-XSRF-TOKEN', // Name of the header to send
 });
+
+// Axios will now automatically read the 'XSRF-TOKEN' cookie
+// and set the 'X-XSRF-TOKEN' header on state-changing requests.
 
 apiClient.interceptors.response.use(
   (response) => response,
@@ -46,6 +52,10 @@ if (token) {
 
 const api = {
   setAuthToken,
+  getHealth: async () => {
+    const { data } = await apiClient.get('/api');
+    return data;
+  },
   login: async (email, password) => {
     const { data } = await apiClient.post('/auth/login', {
       email,
@@ -320,11 +330,6 @@ const api = {
     );
     return data;
   },
-  getMatchPrediction: async (matchId) => {
-    const { data } = await apiClient.get(`/ds/predict/match/${matchId}`);
-    return data;
-  },
-
   getMatchPrediction: async (matchId) => {
     const { data } = await apiClient.get(`/ds/predict/match/${matchId}`);
     return data;

@@ -32,22 +32,33 @@ export const AuthProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('playbook-token');
-    const storedUser = localStorage.getItem('playbook-user');
-
-    if (token && storedUser) {
+    const initializeApp = async () => {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        api.setAuthToken(token);
-        fetchProfile();
+        // This GET request will establish the session and retrieve the CSRF token
+        await api.getHealth();
       } catch (error) {
-        console.error('Failed to parse user from localStorage', error);
-        localStorage.removeItem('playbook-token');
-        localStorage.removeItem('playbook-user');
+        console.error('Failed to initialize session. CSRF might fail.', error);
       }
-    }
-    setLoading(false);
+
+      const token = localStorage.getItem('playbook-token');
+      const storedUser = localStorage.getItem('playbook-user');
+
+      if (token && storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+          api.setAuthToken(token);
+          await fetchProfile(); // Make sure to await this
+        } catch (error) {
+          console.error('Failed to parse user from localStorage', error);
+          localStorage.removeItem('playbook-token');
+          localStorage.removeItem('playbook-user');
+        }
+      }
+      setLoading(false);
+    };
+
+    initializeApp();
   }, []);
 
   const login = async (email, password, recaptchaToken) => {

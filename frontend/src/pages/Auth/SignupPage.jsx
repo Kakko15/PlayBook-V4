@@ -109,7 +109,7 @@ const SignupPage = () => {
         recaptchaToken
       );
       toast.success(data.message);
-      navigate('/pending-approval');
+      navigate('/check-email');
     } catch (error) {
       toast.error(error.response?.data?.message || 'An error occurred.');
       recaptchaRef.current?.reset();
@@ -222,7 +222,7 @@ const SignupPage = () => {
                         type='button'
                         tabIndex={-1}
                         onClick={() => setShowPassword(!showPassword)}
-                        className='text-on-surface-variant absolute inset-y-0 right-0 flex items-center pr-3'
+                        className='absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant'
                         disabled={isLoading}
                       >
                         {showPassword ? (

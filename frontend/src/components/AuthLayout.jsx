@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import Logo from '@/components/Logo';
 import { containerVariants, slideUpVariants } from '@/lib/animations';

@@ -36,7 +36,6 @@ const TournamentCard = ({ tournament, isPublic = false }) => {
 
   const onCardAction = (e) => {
     e.stopPropagation();
-    console.log('Card action clicked');
   };
 
   return (

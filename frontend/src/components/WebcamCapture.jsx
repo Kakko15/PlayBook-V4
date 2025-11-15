@@ -1,4 +1,4 @@
-import React, { useRef, useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 import Webcam from 'react-webcam';
 import { Button } from '@/components/ui/button';
 import Icon from '@/components/Icon';
