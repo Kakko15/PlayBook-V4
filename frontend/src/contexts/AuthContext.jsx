@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import api from '@/lib/api';
+import eventBus from '@/lib/eventBus';
 import Loader from '@/components/Loader';
 
 export const AuthContext = createContext(null);
@@ -12,21 +13,9 @@ export const AuthProvider = ({ children }) => {
   const fetchProfile = async () => {
     try {
       const profileData = await api.getProfile();
-      if (!profileData) {
-        // This handles the "zombie session" where the user is deleted
-        // but the token is still in localStorage.
-        console.error(
-          'AuthContext: No profile found for logged-in user. Forcing logout.'
-        );
-        logout();
-        return;
-      }
       setProfile(profileData);
     } catch (error) {
       console.error('Failed to fetch profile in context', error);
-      if (error.response?.status === 401) {
-        logout();
-      }
     }
   };
 
@@ -37,7 +26,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('playbook-user');
     sessionStorage.removeItem('playbook-otp-email');
     api.setAuthToken(null);
-    window.location.href = '/login';
+    eventBus.dispatch('sessionEnded', { path: '/login' });
   };
 
   useEffect(() => {

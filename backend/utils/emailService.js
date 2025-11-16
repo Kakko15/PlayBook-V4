@@ -132,6 +132,60 @@ export const sendApprovalEmail = async (userEmail, userName) => {
   await sendEmail(userEmail, title, html);
 };
 
+export const sendRejectionEmail = async (userEmail, userName) => {
+  const title = "Your PlayBook Registration";
+  const preheader = "An update on your PlayBook account status.";
+  const content = `
+    <h2 style="font-family: 'Google Sans', 'Inter', Arial, sans-serif; font-size: 22px; font-weight: 600; color: #111827; margin-top: 0; margin-bottom: 24px;">
+      Hi ${userName},
+    </h2>
+    <p style="font-size: 16px; color: #374151; line-height: 1.6; margin-bottom: 16px;">
+      Thank you for your interest in PlayBook. After a review, your registration for an administrator account has not been approved at this time.
+    </p>
+    <p style="font-size: 16px; color: #374151; line-height: 1.6; margin-bottom: 24px;">
+      If you believe this is an error, please contact your Super Admin for further assistance.
+    </p>
+  `;
+  const html = emailTemplate(title, preheader, content);
+  await sendEmail(userEmail, title, html);
+};
+
+export const sendSuspensionEmail = async (userEmail, userName) => {
+  const title = "Your PlayBook Account Has Been Suspended";
+  const preheader = "Your account access has been temporarily revoked.";
+  const content = `
+    <h2 style="font-family: 'Google Sans', 'Inter', Arial, sans-serif; font-size: 22px; font-weight: 600; color: #111827; margin-top: 0; margin-bottom: 24px;">
+      Hi ${userName},
+    </h2>
+    <p style="font-size: 16px; color: #374151; line-height: 1.6; margin-bottom: 16px;">
+      Your PlayBook administrator account has been suspended by a Super Admin. You will not be able to log in.
+    </p>
+    <p style="font-size: 16px; color: #374151; line-height: 1.6; margin-bottom: 24px;">
+      If you believe this is an error, please contact your Super Admin for further assistance.
+    </p>
+  `;
+  const html = emailTemplate(title, preheader, content);
+  await sendEmail(userEmail, title, html);
+};
+
+export const sendDeletionEmail = async (userEmail, userName) => {
+  const title = "Your PlayBook Account Has Been Deleted";
+  const preheader = "Your account and associated data have been removed.";
+  const content = `
+    <h2 style="font-family: 'Google Sans', 'Inter', Arial, sans-serif; font-size: 22px; font-weight: 600; color: #111827; margin-top: 0; margin-bottom: 24px;">
+      Hi ${userName},
+    </h2>
+    <p style="font-size: 16px; color: #374151; line-height: 1.6; margin-bottom: 16px;">
+      Your PlayBook administrator account has been permanently deleted by a Super Admin.
+    </p>
+    <p style="font-size: 16px; color: #374151; line-height: 1.6; margin-bottom: 24px;">
+      All of your associated data has been removed from our system. If you wish to use PlayBook in the future, you will need to sign up again.
+    </p>
+  `;
+  const html = emailTemplate(title, preheader, content);
+  await sendEmail(userEmail, title, html);
+};
+
 export const sendPasswordResetEmail = async (userEmail, userName, resetUrl) => {
   const title = "Reset Your PlayBook Password";
   const preheader = "A request was made to reset your password.";

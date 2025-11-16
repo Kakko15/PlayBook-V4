@@ -1,5 +1,14 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
+import { useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import api from '@/lib/api';
+import eventBus from '@/lib/eventBus';
 import Loader from '@/components/Loader';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -17,6 +26,8 @@ import CheckEmailPage from '@/pages/Auth/CheckEmailPage';
 import OtpSetupPage from '@/pages/Auth/OtpSetupPage';
 import OtpVerifyPage from '@/pages/Auth/OtpVerifyPage';
 import ResetPasswordPage from '@/pages/Auth/ResetPasswordPage';
+import SuspendedPage from '@/pages/Auth/SuspendedPage';
+import DeletedPage from '@/pages/Auth/DeletedPage';
 import DiscordCallbackPage from '@/pages/Auth/DiscordCallbackPage';
 import GoogleCallbackPage from '@/pages/Auth/GoogleCallbackPage';
 
@@ -50,12 +61,45 @@ const PageLayout = ({ children }) => (
 );
 
 function App() {
-  const { user, loading } = useAuth();
+  const { user, loading, setUser, setProfile } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  if (loading) {
-    return null;
-  }
+  useEffect(() => {
+    const handleSessionEnd = (data) => {
+      setUser(null);
+      setProfile(null);
+      navigate(data.path, { replace: true });
+    };
+
+    eventBus.on('sessionEnded', handleSessionEnd);
+
+    return () => {
+      eventBus.remove('sessionEnded', handleSessionEnd);
+    };
+  }, [navigate, setUser, setProfile]);
+
+  useEffect(() => {
+    let intervalId;
+
+    const checkSession = async () => {
+      try {
+        await api.getAccountDetails();
+      } catch (error) {
+        console.log('Session check failed, interceptor will handle redirect.');
+      }
+    };
+
+    if (user) {
+      intervalId = setInterval(checkSession, 3000);
+    }
+
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [user]);
 
   return (
     <ErrorBoundary>
@@ -159,6 +203,22 @@ function App() {
             element={
               <PageLayout>
                 <ResetPasswordPage />
+              </PageLayout>
+            }
+          />
+          <Route
+            path='/suspended'
+            element={
+              <PageLayout>
+                <SuspendedPage />
+              </PageLayout>
+            }
+          />
+          <Route
+            path='/deleted'
+            element={
+              <PageLayout>
+                <DeletedPage />
               </PageLayout>
             }
           />

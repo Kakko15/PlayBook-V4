@@ -70,7 +70,6 @@ export const useOAuthCallback = (oauthApiCall, providerName = 'OAuth') => {
         if (data.token && data.user) {
           storeAuthData(data.token, data.user, api.setAuthToken);
           setUser(data.user);
-          toast.success(getWelcomeMessage(data.user));
           navigateAfterLogin(data.user, navigate);
         }
       } catch (error) {

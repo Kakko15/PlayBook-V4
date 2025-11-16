@@ -787,7 +787,9 @@ export const getAccountDetails = async (req, res, next) => {
 
     if (error) return next(error);
     if (!user) {
-      return res.status(404).json({ message: "User not found." });
+      return res
+        .status(401)
+        .json({ message: "User not found for this token." });
     }
 
     res.status(200).json(user);
@@ -908,6 +910,13 @@ export const getProfile = async (req, res, next) => {
       .single();
 
     if (error) return next(error);
+
+    if (!data) {
+      return res
+        .status(401)
+        .json({ message: "User not found. Profile is missing." });
+    }
+
     res.status(200).json(data);
   } catch (error) {
     next(error);

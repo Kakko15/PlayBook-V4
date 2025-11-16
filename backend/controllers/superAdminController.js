@@ -1,5 +1,10 @@
 import supabase from "../supabaseClient.js";
-import { sendApprovalEmail } from "../utils/emailService.js";
+import {
+  sendApprovalEmail,
+  sendSuspensionEmail,
+  sendDeletionEmail,
+  sendRejectionEmail,
+} from "../utils/emailService.js";
 
 const BUCKET_NAME = "backups";
 const TABLES_TO_BACKUP = [
@@ -131,12 +136,16 @@ export const manageUserStatus = async (req, res, next) => {
       .from("users")
       .update({ status })
       .eq("id", id)
-      .select("id, status")
+      .select("id, name, email, status")
       .single();
 
     if (error) return next(error);
     if (!data) {
       return res.status(404).json({ message: "User not found." });
+    }
+
+    if (status === "suspended") {
+      await sendSuspensionEmail(data.email, data.name);
     }
 
     res
@@ -161,12 +170,21 @@ export const deleteUser = async (req, res, next) => {
       .from("users")
       .delete()
       .eq("id", id)
-      .select()
+      .select("id, name, email, status")
       .single();
 
     if (error) return next(error);
     if (!user) {
       return res.status(404).json({ message: "User not found." });
+    }
+
+    if (user.status === "active" || user.status === "suspended") {
+      await sendDeletionEmail(user.email, user.name);
+    } else if (
+      user.status === "pending_approval" ||
+      user.status === "pending"
+    ) {
+      await sendRejectionEmail(user.email, user.name);
     }
 
     res.status(200).json({ message: "User deleted successfully." });

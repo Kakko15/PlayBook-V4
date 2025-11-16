@@ -30,7 +30,10 @@ const OtpSetupPage = () => {
         setSecret(data.secret);
         setQrCodeUrl(data.qrCodeUrl);
       } catch (error) {
-        toast.error('Failed to generate 2FA secret. Please refresh.');
+        const status = error.response?.status;
+        if (status !== 401 && status !== 403) {
+          toast.error('Failed to generate 2FA secret. Please refresh.');
+        }
       } finally {
         setIsLoading(false);
       }

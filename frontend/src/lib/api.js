@@ -1,4 +1,5 @@
 import axios from 'axios';
+import eventBus from './eventBus';
 
 const API_BASE_URL =
   import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
@@ -34,25 +35,44 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+const fullLogout = () => {
+  localStorage.removeItem('playbook-token');
+  localStorage.removeItem('playbook-user');
+  sessionStorage.removeItem('playbook-otp-email');
+  delete apiClient.defaults.headers.common['Authorization'];
+};
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      const currentPath = window.location.pathname;
-      const excludedPaths = [
-        '/verify-2fa',
-        '/reset-password',
-        '/account-settings',
-      ];
-      const isExcluded = excludedPaths.some((path) =>
-        currentPath.includes(path)
-      );
+    const status = error.response?.status;
+    const message = error.response?.data?.message || '';
 
-      if (!isExcluded) {
-        localStorage.removeItem('playbook-token');
-        localStorage.removeItem('playbook-user');
-        window.location.href = '/login';
+    if (status === 401 || status === 403) {
+      const currentPath = window.location.pathname;
+      const isPublicPage =
+        currentPath.startsWith('/login') ||
+        currentPath.startsWith('/signup') ||
+        currentPath.startsWith('/reset-password') ||
+        currentPath.startsWith('/suspended') ||
+        currentPath.startsWith('/deleted') ||
+        currentPath.startsWith('/auth/callback') ||
+        currentPath.startsWith('/pending-approval') ||
+        currentPath.startsWith('/check-email');
+
+      if (isPublicPage) {
+        return Promise.reject(error);
       }
+
+      fullLogout();
+      let path = '/login';
+      if (message.includes('User not found')) {
+        path = '/deleted';
+      } else if (message.includes('suspended')) {
+        path = '/suspended';
+      }
+
+      eventBus.dispatch('sessionEnded', { path });
     }
     return Promise.reject(error);
   }
