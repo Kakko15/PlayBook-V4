@@ -189,21 +189,30 @@ export const getTeams = async (req, res, next) => {
 
 export const addTeam = async (req, res, next) => {
   const { tournamentId } = req.params;
-  const { name, logo_url, department_id } = req.body;
+  const { department_id } = req.body;
   const { userId } = req.user;
 
-  if (!name || !department_id) {
-    return res
-      .status(400)
-      .json({ message: "Team name and department are required." });
+  if (!department_id) {
+    return res.status(400).json({ message: "Department is required." });
   }
 
   try {
+    const { data: department, error: deptError } = await supabase
+      .from("departments")
+      .select("name, acronym")
+      .eq("id", department_id)
+      .single();
+
+    if (deptError) return next(deptError);
+    if (!department) {
+      return res.status(404).json({ message: "Department not found." });
+    }
+
     const { data, error } = await supabase
       .from("teams")
       .insert({
-        name: sanitize(name),
-        logo_url: sanitize(logo_url) || null,
+        name: sanitize(department.name),
+        logo_url: `https://avatar.vercel.sh/${department.acronym}.png`,
         tournament_id: tournamentId,
         department_id: department_id,
       })
@@ -216,7 +225,7 @@ export const addTeam = async (req, res, next) => {
       p_icon: "group_add",
       p_color: "text-blue-600",
       p_title: "New Team Added",
-      p_description: `"${sanitize(name)}" joined a tournament.`,
+      p_description: `"${sanitize(department.name)}" joined a tournament.`,
       p_tournament_id: tournamentId,
       p_user_id: userId,
     });
@@ -229,14 +238,14 @@ export const addTeam = async (req, res, next) => {
 
 export const updateTeam = async (req, res, next) => {
   const { teamId } = req.params;
-  const { name, logo_url, department_id } = req.body;
+  const { department_id } = req.body;
 
   try {
+    // Note: This logic assumes you only want to update the department.
+    // If you also want to auto-update name, you need to fetch department info here too.
     const { data, error } = await supabase
       .from("teams")
       .update({
-        name: sanitize(name),
-        logo_url: sanitize(logo_url) || null,
         department_id: department_id,
       })
       .eq("id", teamId)

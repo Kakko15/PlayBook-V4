@@ -56,7 +56,7 @@ const CreateTournamentModal = ({ isOpen, onClose, onSuccess, tournament }) => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      game: undefined,
+      game: 'basketball',
       start_date: '',
       end_date: '',
     },
@@ -84,7 +84,7 @@ const CreateTournamentModal = ({ isOpen, onClose, onSuccess, tournament }) => {
       } else {
         form.reset({
           name: '',
-          game: undefined,
+          game: 'basketball',
           start_date: '',
           end_date: '',
         });
@@ -98,6 +98,7 @@ const CreateTournamentModal = ({ isOpen, onClose, onSuccess, tournament }) => {
       if (isEditMode) {
         const payload = {
           ...values,
+          game: 'basketball',
           startDate: values.start_date || null,
           endDate: values.end_date || null,
         };
@@ -106,6 +107,7 @@ const CreateTournamentModal = ({ isOpen, onClose, onSuccess, tournament }) => {
       } else {
         const payload = {
           ...values,
+          game: 'basketball',
           start_date: values.start_date || null,
           end_date: values.end_date || null,
         };
@@ -200,26 +202,6 @@ const CreateTournamentModal = ({ isOpen, onClose, onSuccess, tournament }) => {
                             className='h-6 w-6'
                           />
                           <span>Basketball</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value='valorant'>
-                        <div className='flex items-center gap-3'>
-                          <img
-                            src='/images/valorant_logo.png'
-                            alt='Valorant'
-                            className='h-6 w-6'
-                          />
-                          <span>Valorant</span>
-                        </div>
-                      </SelectItem>
-                      <SelectItem value='mlbb'>
-                        <div className='flex items-center gap-3'>
-                          <img
-                            src='/images/ml_logo.png'
-                            alt='Mobile Legends'
-                            className='h-6 w-6'
-                          />
-                          <span>Mobile Legends</span>
                         </div>
                       </SelectItem>
                     </SelectContent>

@@ -66,8 +66,6 @@ const AnalyticsPage = () => {
   };
 
   const basketballData = processArchetypeData('basketball');
-  const valorantData = processArchetypeData('valorant');
-  const mlbbData = processArchetypeData('mlbb');
 
   return (
     <div className='p-8'>
@@ -94,68 +92,6 @@ const AnalyticsPage = () => {
                     <Legend />
                     <Bar dataKey='count' fill='#FF9100' />
                   </BarChart>
-                </ResponsiveContainer>
-              </>
-            )}
-            {valorantData.length > 0 && (
-              <>
-                <h3 className='mb-4 mt-6 text-lg font-semibold'>Valorant</h3>
-                <ResponsiveContainer width='100%' height={300}>
-                  <PieChart>
-                    <Pie
-                      data={valorantData}
-                      cx='50%'
-                      cy='50%'
-                      labelLine={false}
-                      outerRadius={100}
-                      fill='#8884d8'
-                      dataKey='count'
-                      label={({ name, percent }) =>
-                        `${name} (${(percent * 100).toFixed(0)}%)`
-                      }
-                    >
-                      {valorantData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </>
-            )}
-            {mlbbData.length > 0 && (
-              <>
-                <h3 className='mb-4 mt-6 text-lg font-semibold'>
-                  Mobile Legends (MLBB)
-                </h3>
-                <ResponsiveContainer width='100%' height={300}>
-                  <PieChart>
-                    <Pie
-                      data={mlbbData}
-                      cx='50%'
-                      cy='50%'
-                      labelLine={false}
-                      outerRadius={100}
-                      fill='#8884d8'
-                      dataKey='count'
-                      label={({ name, percent }) =>
-                        `${name} (${(percent * 100).toFixed(0)}%)`
-                      }
-                    >
-                      {mlbbData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
                 </ResponsiveContainer>
               </>
             )}

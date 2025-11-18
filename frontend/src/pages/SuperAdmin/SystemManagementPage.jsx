@@ -34,7 +34,6 @@ const SystemManagementPage = () => {
 
   const [isTrainingArchetypes, setIsTrainingArchetypes] = useState(false);
   const [isTrainingPredictor, setIsTrainingPredictor] = useState(false);
-  const [selectedGame, setSelectedGame] = useState('');
 
   const fetchBackups = async () => {
     setIsLoading(true);
@@ -86,13 +85,9 @@ const SystemManagementPage = () => {
   };
 
   const handleTrainArchetypes = async () => {
-    if (!selectedGame) {
-      toast.error('Please select a game to train.');
-      return;
-    }
     setIsTrainingArchetypes(true);
     try {
-      const { message } = await api.trainArchetypeModel(selectedGame);
+      const { message } = await api.trainArchetypeModel('basketball');
       toast.success(message);
     } catch (error) {
       toast.error(
@@ -198,27 +193,17 @@ const SystemManagementPage = () => {
               <div className='space-y-2'>
                 <Label>Train Player Archetypes (K-Means Mock)</Label>
                 <div className='flex gap-2'>
-                  <Select onValueChange={setSelectedGame} value={selectedGame}>
-                    <SelectTrigger className='w-full'>
-                      <SelectValue placeholder='Select a game' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='basketball'>Basketball</SelectItem>
-                      <SelectItem value='valorant'>Valorant</SelectItem>
-                      <SelectItem value='mlbb'>Mobile Legends</SelectItem>
-                    </SelectContent>
-                  </Select>
                   <Button
                     onClick={handleTrainArchetypes}
-                    disabled={isTrainingArchetypes || !selectedGame}
-                    className='flex-shrink-0'
+                    disabled={isTrainingArchetypes}
+                    className='w-full flex-shrink-0'
                   >
                     {isTrainingArchetypes ? (
                       <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                     ) : (
                       <Icon name='model_training' className='mr-2' />
                     )}
-                    Train
+                    Train Basketball Model
                   </Button>
                 </div>
                 <p className='text-xs text-muted-foreground'>

@@ -28,6 +28,7 @@ import { cn } from '@/lib/utils';
 const getStatSchema = (game) => {
   switch (game) {
     case 'basketball':
+    default:
       return z.object({
         pts: z.coerce.number().min(0).default(0),
         reb: z.coerce.number().min(0).default(0),
@@ -40,15 +41,6 @@ const getStatSchema = (game) => {
         shot_x_coord: z.coerce.number().optional(),
         shot_y_coord: z.coerce.number().optional(),
       });
-    case 'valorant':
-    case 'mlbb':
-      return z.object({
-        kills: z.coerce.number().min(0).default(0),
-        deaths: z.coerce.number().min(0).default(0),
-        assists: z.coerce.number().min(0).default(0),
-      });
-    default:
-      return z.object({});
   }
 };
 
@@ -145,6 +137,7 @@ const LogMatchModal = ({ isOpen, onClose, onSuccess, match, game }) => {
   const getStatFields = () => {
     switch (game) {
       case 'basketball':
+      default:
         return [
           'pts',
           'reb',
@@ -155,11 +148,6 @@ const LogMatchModal = ({ isOpen, onClose, onSuccess, match, game }) => {
           'games_started',
           'sportsmanship_rating',
         ];
-      case 'valorant':
-      case 'mlbb':
-        return ['kills', 'deaths', 'assists'];
-      default:
-        return [];
     }
   };
 

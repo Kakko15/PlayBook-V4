@@ -33,17 +33,9 @@ import { Loader2 } from 'lucide-react';
 import Icon from '@/components/Icon';
 
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Team name must be at least 2 characters.',
-  }),
   department_id: z.string().min(1, {
     message: 'Please select a department.',
   }),
-  logo_url: z
-    .string()
-    .url({ message: 'Please enter a valid URL.' })
-    .optional()
-    .or(z.literal('')),
 });
 
 const TeamModal = ({ isOpen, onClose, onSuccess, tournamentId, team }) => {
@@ -54,9 +46,7 @@ const TeamModal = ({ isOpen, onClose, onSuccess, tournamentId, team }) => {
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: '',
       department_id: '',
-      logo_url: '',
     },
   });
 
@@ -74,15 +64,11 @@ const TeamModal = ({ isOpen, onClose, onSuccess, tournamentId, team }) => {
       fetchDepartments();
       if (isEditMode && team) {
         form.reset({
-          name: team.name,
           department_id: team.department_id || '',
-          logo_url: team.logo_url || '',
         });
       } else {
         form.reset({
-          name: '',
           department_id: '',
-          logo_url: '',
         });
       }
     }
@@ -117,11 +103,13 @@ const TeamModal = ({ isOpen, onClose, onSuccess, tournamentId, team }) => {
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Edit Team' : 'Add New Team'}</DialogTitle>
+          <DialogTitle>
+            {isEditMode ? 'Edit Team' : 'Add Department Team'}
+          </DialogTitle>
           <DialogDescription>
             {isEditMode
               ? 'Update the details for this team.'
-              : 'Add a new team to this tournament.'}
+              : 'Select a department to add to this tournament.'}
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -129,23 +117,6 @@ const TeamModal = ({ isOpen, onClose, onSuccess, tournamentId, team }) => {
             onSubmit={form.handleSubmit(onSubmit)}
             className='space-y-6 pt-4'
           >
-            <FormField
-              control={form.control}
-              name='name'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Team Name</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder='e.g., "The Champions"'
-                      disabled={isLoading}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
             <FormField
               control={form.control}
               name='department_id'
@@ -170,23 +141,6 @@ const TeamModal = ({ isOpen, onClose, onSuccess, tournamentId, team }) => {
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='logo_url'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Team Logo URL (Optional)</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder='https://example.com/logo.png'
-                      disabled={isLoading}
-                      {...field}
-                    />
-                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
