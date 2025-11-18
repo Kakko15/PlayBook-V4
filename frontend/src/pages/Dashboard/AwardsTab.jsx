@@ -14,10 +14,18 @@ const getInitials = (name = '') => {
     .join('');
 };
 
-const AwardCard = ({ title, icon, colorClass, player, metric, value }) => {
+const AwardCard = ({
+  title,
+  icon,
+  colorClass,
+  player,
+  metric,
+  value,
+  isMain = false,
+}) => {
   if (!player) {
     return (
-      <Card>
+      <Card className={isMain ? 'border-2 border-primary shadow-lg' : ''}>
         <CardHeader className='flex-row items-center gap-4 space-y-0'>
           <div
             className={`flex h-12 w-12 items-center justify-center rounded-full ${colorClass} text-white`}
@@ -29,16 +37,20 @@ const AwardCard = ({ title, icon, colorClass, player, metric, value }) => {
           </div>
         </CardHeader>
         <CardContent>
-          <p className='text-muted-foreground'>
-            No eligible player found for this award.
-          </p>
+          <p className='text-muted-foreground'>No eligible player found.</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card>
+    <Card
+      className={
+        isMain
+          ? 'transform border-2 border-primary shadow-lg transition-transform duration-200 hover:scale-105'
+          : 'transition-shadow hover:shadow-md'
+      }
+    >
       <CardHeader className='flex-row items-center gap-4 space-y-0'>
         <div
           className={`flex h-12 w-12 items-center justify-center rounded-full ${colorClass} text-white`}
@@ -53,13 +65,15 @@ const AwardCard = ({ title, icon, colorClass, player, metric, value }) => {
         </div>
       </CardHeader>
       <CardContent className='flex items-center gap-3'>
-        <Avatar className='h-10 w-10'>
+        <Avatar className='h-12 w-12 border-2 border-background shadow-sm'>
           <AvatarImage src={`https://avatar.vercel.sh/${player.name}.png`} />
           <AvatarFallback>{getInitials(player.name)}</AvatarFallback>
         </Avatar>
         <div>
-          <p className='font-semibold text-foreground'>{player.name}</p>
-          <p className='text-sm text-muted-foreground'>{player.team.name}</p>
+          <p className='text-lg font-bold text-foreground'>{player.name}</p>
+          <p className='text-sm font-medium text-muted-foreground'>
+            {player.team.name}
+          </p>
         </div>
       </CardContent>
     </Card>
@@ -75,6 +89,7 @@ const AwardsTab = ({ tournamentId }) => {
     try {
       const players = await api.getPlayerRankings(tournamentId);
 
+      // Filter for eligible players (played at least 60% of team games)
       const eligiblePlayers = players.filter((p) => {
         const teamGames = p.team.wins + p.team.losses;
         if (teamGames === 0) return false;
@@ -82,20 +97,24 @@ const AwardsTab = ({ tournamentId }) => {
       });
 
       if (eligiblePlayers.length === 0) {
-        setWinners({ mvp: null, opoy: null, dpoy: null, smoy: null });
+        setWinners({ mvp: null, mythical5: [] });
         return;
       }
 
-      const findWinner = (key) =>
-        eligiblePlayers.reduce((max, p) => (p[key] > max[key] ? p : max));
+      // Sort by ISU-PS (Player Score) descending
+      const sortedPlayers = [...eligiblePlayers].sort(
+        (a, b) => b.isu_ps - a.isu_ps
+      );
 
-      const mvp = findWinner('isu_ps');
-      const opoy = findWinner('offensive_rating');
-      const dpoy = findWinner('defensive_rating');
-      const smoy = findWinner('avg_sportsmanship');
+      // MVP is the top player
+      const mvp = sortedPlayers[0];
 
-      setWinners({ mvp, opoy, dpoy, smoy });
+      // Mythical 5 are the top 5 players
+      const mythical5 = sortedPlayers.slice(0, 5);
+
+      setWinners({ mvp, mythical5 });
     } catch (error) {
+      console.error(error);
       toast.error('Failed to calculate awards.');
     } finally {
       setIsLoading(false);
@@ -114,57 +133,74 @@ const AwardsTab = ({ tournamentId }) => {
     );
   }
 
-  if (!winners) {
+  if (!winners || !winners.mvp) {
     return (
       <div className='flex h-48 flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card'>
-        <Icon
-          name='social_leaderboard'
-          className='h-12 w-12 text-muted-foreground'
-        />
+        <Icon name='emoji_events' className='h-12 w-12 text-muted-foreground' />
         <h3 className='mt-4 text-xl font-semibold text-foreground'>
-          No Awards Calculated
+          No Awards Calculated Yet
         </h3>
         <p className='mt-2 text-muted-foreground'>
-          Not enough data to determine award winners.
+          Play more matches to generate enough data for MVP and Mythical 5.
         </p>
       </div>
     );
   }
 
   return (
-    <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-      <AwardCard
-        title='Most Valuable Player (MVP)'
-        icon='military_tech'
-        colorClass='bg-yellow-500'
-        player={winners.mvp}
-        metric='ISU-PS'
-        value={winners.mvp?.isu_ps || 0}
-      />
-      <AwardCard
-        title='Offensive Player of the Year'
-        icon='local_fire_department'
-        colorClass='bg-red-500'
-        player={winners.opoy}
-        metric='Offensive Rating'
-        value={winners.opoy?.offensive_rating || 0}
-      />
-      <AwardCard
-        title='Defensive Player of the Year'
-        icon='shield'
-        colorClass='bg-blue-500'
-        player={winners.dpoy}
-        metric='Defensive Rating'
-        value={winners.dpoy?.defensive_rating || 0}
-      />
-      <AwardCard
-        title='Sportsmanship of the Year'
-        icon='handshake'
-        colorClass='bg-green-500'
-        player={winners.smoy}
-        metric='Sportsmanship'
-        value={winners.smoy?.avg_sportsmanship || 0}
-      />
+    <div className='space-y-10'>
+      {/* MVP Section */}
+      <div className='flex justify-center'>
+        <div className='w-full max-w-md'>
+          <h2 className='mb-6 flex items-center justify-center gap-2 text-center text-2xl font-bold text-foreground'>
+            <Icon name='military_tech' className='text-yellow-500' /> Season MVP
+          </h2>
+          <AwardCard
+            title='Most Valuable Player'
+            icon='military_tech'
+            colorClass='bg-yellow-500'
+            player={winners.mvp}
+            metric='ISU-PS'
+            value={winners.mvp?.isu_ps || 0}
+            isMain={true}
+          />
+        </div>
+      </div>
+
+      {/* Mythical 5 Section */}
+      <div>
+        <h2 className='mb-6 flex items-center gap-2 text-xl font-bold text-foreground'>
+          <Icon name='groups' className='text-primary' /> The Mythical 5
+        </h2>
+        <div className='grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5'>
+          {winners.mythical5.map((player, index) => (
+            <AwardCard
+              key={player.id}
+              title={`Mythical Selection #${index + 1}`}
+              icon='star'
+              colorClass='bg-blue-600'
+              player={player}
+              metric='ISU-PS'
+              value={player.isu_ps}
+            />
+          ))}
+          {/* Fill empty slots if less than 5 players */}
+          {Array.from({
+            length: Math.max(0, 5 - winners.mythical5.length),
+          }).map((_, i) => (
+            <Card key={`empty-${i}`} className='border-dashed opacity-50'>
+              <CardHeader className='flex-row items-center gap-4'>
+                <div className='flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground'>
+                  <Icon name='person_off' className='text-2xl' />
+                </div>
+                <CardTitle className='text-base'>
+                  Slot #{winners.mythical5.length + i + 1}
+                </CardTitle>
+              </CardHeader>
+            </Card>
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

@@ -5,130 +5,176 @@ import { Edit } from 'lucide-react';
 const TeamDisplay = ({ team, score, isWinner }) => (
   <div
     className={cn(
-      'flex h-10 items-center justify-between rounded-md border-b border-border bg-card px-3 py-2',
+      'flex h-8 items-center justify-between rounded-md px-2 transition-colors',
       isWinner
-        ? 'font-bold text-foreground'
-        : 'text-muted-foreground opacity-70'
+        ? 'bg-primary/10 font-bold text-primary'
+        : 'text-muted-foreground'
     )}
   >
-    <div className='flex items-center gap-2 truncate'>
-      <img
-        src={
-          team?.logo_url ||
-          `https://avatar.vercel.sh/${team?.name || 'TBD'}.png`
-        }
-        alt={team?.name || 'TBD'}
-        className='h-5 w-5 rounded-full bg-muted'
-        onError={(e) => {
-          e.currentTarget.src = `https://avatar.vercel.sh/${team?.name || 'TBD'}.png`;
-        }}
-      />
-      <span className='truncate'>{team?.name || 'TBD'}</span>
+    <div className='flex items-center gap-2 overflow-hidden truncate'>
+      {team ? (
+        <img
+          src={team.logo_url || `https://avatar.vercel.sh/${team.name}.png`}
+          alt={team.name}
+          className='h-4 w-4 flex-shrink-0 rounded-full bg-background object-cover'
+          onError={(e) => {
+            e.currentTarget.src = `https://avatar.vercel.sh/${team.name}.png`;
+          }}
+        />
+      ) : (
+        <div className='h-4 w-4 flex-shrink-0 rounded-full bg-muted' />
+      )}
+      <span className='truncate text-xs'>{team?.name || 'TBD'}</span>
     </div>
-    <span className={cn(isWinner ? 'font-bold' : 'font-medium')}>
-      {score ?? '-'}
-    </span>
+    <span className='ml-2 font-mono text-xs'>{score ?? '-'}</span>
   </div>
 );
 
-const MatchCard = ({ match, allMatches, onLogResult, isAdmin }) => {
-  if (!match) return null;
-
+const MatchCard = ({ match, onLogResult, isAdmin }) => {
   const isCompleted = match.status === 'completed';
   const team1Win = match.team1_score > match.team2_score;
   const team2Win = match.team2_score > match.team1_score;
 
-  const feederMatch1 = allMatches.find(
+  return (
+    <div className='relative w-56 flex-shrink-0'>
+      <div
+        className={cn(
+          'relative z-10 flex flex-col gap-1 rounded-xl border bg-card p-2 shadow-sm transition-all duration-200 hover:border-primary/50 hover:shadow-md',
+          isCompleted
+            ? 'border-border'
+            : 'border-dashed border-muted-foreground/30'
+        )}
+      >
+        <div className='mb-1 flex items-center justify-between px-1'>
+          <span className='text-[10px] font-bold uppercase tracking-wider text-muted-foreground'>
+            {match.round_name}
+          </span>
+          {isAdmin && (
+            <Button
+              variant='ghost'
+              size='icon'
+              className='h-5 w-5 opacity-50 hover:opacity-100'
+              onClick={() => onLogResult(match)}
+            >
+              <Edit className='h-3 w-3' />
+            </Button>
+          )}
+        </div>
+
+        <TeamDisplay
+          team={match.team1}
+          score={match.team1_score}
+          isWinner={team1Win}
+        />
+        <div className='my-0.5 h-px w-full bg-border/50' />
+        <TeamDisplay
+          team={match.team2}
+          score={match.team2_score}
+          isWinner={team2Win}
+        />
+      </div>
+    </div>
+  );
+};
+
+const BracketNode = ({ match, allMatches, onLogResult, isAdmin }) => {
+  if (!match) return null;
+
+  // Find feeders
+  const feeder1 = allMatches.find(
     (m) => m.next_match_id === match.id && m.winner_advances_to_slot === 'team1'
   );
-  const feederMatch2 = allMatches.find(
+  const feeder2 = allMatches.find(
     (m) => m.next_match_id === match.id && m.winner_advances_to_slot === 'team2'
   );
 
+  const hasFeeders = feeder1 || feeder2;
+
   return (
     <div className='flex items-center'>
-      <div className='flex w-64 flex-col gap-4'>
-        {feederMatch1 ? (
-          <MatchCard
-            match={feederMatch1}
-            allMatches={allMatches}
-            onLogResult={onLogResult}
-            isAdmin={isAdmin}
-          />
-        ) : (
-          <div className='h-10 w-full' />
-        )}
-        {feederMatch2 ? (
-          <MatchCard
-            match={feederMatch2}
-            allMatches={allMatches}
-            onLogResult={onLogResult}
-            isAdmin={isAdmin}
-          />
-        ) : (
-          <div className='h-10 w-full' />
-        )}
-      </div>
-
-      <div className='relative h-full w-8'>
-        <div className='absolute left-0 top-1/2 h-[calc(50%+1rem)] w-1/2 -translate-y-1/2 border-b border-r border-t border-border' />
-        <div className='absolute left-1/2 top-1/4 h-[calc(50%+2rem)] w-px -translate-y-1/4 bg-border' />
-      </div>
-
-      <div className='w-64 flex-shrink-0'>
-        <div className='space-y-1 rounded-lg border border-border bg-muted/30 p-2'>
-          <TeamDisplay
-            team={match.team1}
-            score={match.team1_score}
-            isWinner={team1Win}
-          />
-          <TeamDisplay
-            team={match.team2}
-            score={match.team2_score}
-            isWinner={team2Win}
-          />
-          <div className='flex items-center justify-between pt-1'>
-            <span className='px-1 text-xs text-muted-foreground'>
-              {match.round_name}
-            </span>
-            {isAdmin && (
-              <Button
-                variant='ghost'
-                size='sm'
-                className='h-7 px-2'
-                onClick={() => onLogResult(match)}
-                disabled={!match.team1_id || !match.team2_id}
-              >
-                <Edit className='mr-1 h-3 w-3' />
-                {isCompleted ? 'Edit' : 'Log'}
-              </Button>
+      {/* LEFT SIDE: Feeders */}
+      {hasFeeders && (
+        <div className='mr-8 flex flex-col justify-center'>
+          {/* TOP BRANCH */}
+          <div className='relative flex flex-col justify-center'>
+            {feeder1 ? (
+              <BracketNode
+                match={feeder1}
+                allMatches={allMatches}
+                onLogResult={onLogResult}
+                isAdmin={isAdmin}
+              />
+            ) : (
+              // Spacer for Bye/Direct Advance to maintain tree structure
+              <div className='flex h-24 w-56 items-center justify-end pr-4'>
+                <span className='text-[10px] font-medium uppercase tracking-widest text-muted-foreground/40'>
+                  Direct Advance
+                </span>
+              </div>
             )}
+            {/* Connector Line Top: Goes across and down */}
+            <div className='pointer-events-none absolute right-[-2rem] top-1/2 h-[calc(50%+2px)] w-8 translate-y-0 rounded-tr-xl border-r-2 border-t-2 border-border/60'></div>
+          </div>
+
+          {/* BOTTOM BRANCH */}
+          <div className='relative flex flex-col justify-center'>
+            {feeder2 ? (
+              <BracketNode
+                match={feeder2}
+                allMatches={allMatches}
+                onLogResult={onLogResult}
+                isAdmin={isAdmin}
+              />
+            ) : (
+              <div className='flex h-24 w-56 items-center justify-end pr-4'>
+                <span className='text-[10px] font-medium uppercase tracking-widest text-muted-foreground/40'>
+                  Direct Advance
+                </span>
+              </div>
+            )}
+            {/* Connector Line Bottom: Goes across and up */}
+            <div className='pointer-events-none absolute bottom-1/2 right-[-2rem] h-[calc(50%+2px)] w-8 -translate-y-0 rounded-br-xl border-b-2 border-r-2 border-border/60'></div>
           </div>
         </div>
+      )}
+
+      {/* RIGHT SIDE: Match Card */}
+      <div className='relative z-20'>
+        {/* Horizontal Line Input into Match Card */}
+        {hasFeeders && (
+          <div className='absolute left-[-1rem] top-1/2 h-0.5 w-4 -translate-y-1/2 bg-border/60'></div>
+        )}
+
+        <MatchCard match={match} onLogResult={onLogResult} isAdmin={isAdmin} />
       </div>
     </div>
   );
 };
 
 const BracketDisplay = ({ matches, onLogResult, isAdmin = false }) => {
-  const finalMatch = matches.find((m) => m.round_name === 'Finals');
+  // Find the final match (root)
+  const finalMatch =
+    matches.find((m) => m.round_name === 'Finals') ||
+    matches[matches.length - 1];
 
   if (!finalMatch) {
     return (
-      <div className='text-center text-muted-foreground'>
-        Finals match not found.
+      <div className='flex h-64 items-center justify-center text-muted-foreground'>
+        No matches found.
       </div>
     );
   }
 
   return (
-    <div className='flex w-full overflow-x-auto p-4'>
-      <MatchCard
-        match={finalMatch}
-        allMatches={matches}
-        onLogResult={onLogResult}
-        isAdmin={isAdmin}
-      />
+    <div className='w-full overflow-auto rounded-xl border border-outline-variant/50 bg-surface-variant/5 p-12'>
+      <div className='flex min-w-max justify-end'>
+        <BracketNode
+          match={finalMatch}
+          allMatches={matches}
+          onLogResult={onLogResult}
+          isAdmin={isAdmin}
+        />
+      </div>
     </div>
   );
 };

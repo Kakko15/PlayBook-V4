@@ -116,7 +116,7 @@ const TournamentWorkspace = () => {
                   name='workspace_premium'
                   className='mr-0 h-4 w-4 sm:mr-2'
                 />
-                <span classNameName='hidden sm:inline'>Rankings</span>
+                <span className='hidden sm:inline'>Rankings</span>
               </TabsTrigger>
               <TabsTrigger value='awards'>
                 <Icon name='military_tech' className='mr-0 h-4 w-4 sm:mr-2' />
