@@ -148,7 +148,12 @@ export const login = async (req, res, next) => {
 
     if (findError) return next(findError);
     if (!user) {
-      return res.status(401).json({ message: "Invalid credentials." });
+      const remaining = req.rateLimit ? req.rateLimit.remaining : null;
+      const message =
+        remaining !== null
+          ? `Invalid credentials. ${remaining} attempts remaining.`
+          : "Invalid credentials.";
+      return res.status(401).json({ message });
     }
 
     if (!user.password_hash) {
@@ -160,7 +165,12 @@ export const login = async (req, res, next) => {
 
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) {
-      return res.status(401).json({ message: "Invalid credentials." });
+      const remaining = req.rateLimit ? req.rateLimit.remaining : null;
+      const message =
+        remaining !== null
+          ? `Invalid credentials. ${remaining} attempts remaining.`
+          : "Invalid credentials.";
+      return res.status(401).json({ message });
     }
 
     if (user.status !== "active") {
