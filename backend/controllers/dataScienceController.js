@@ -1,12 +1,9 @@
 import supabase from "../supabaseClient.js";
 
 export const getGlobalAnalytics = async (req, res, next) => {
-  console.log("\n[getGlobalAnalytics] Function Start");
-
   let archetypes, model;
 
   try {
-    console.log("[getGlobalAnalytics] Calling RPC 'get_archetype_counts'...");
     const { data: rpcData, error: archetypeError } = await supabase.rpc(
       "get_archetype_counts"
     );
@@ -21,7 +18,7 @@ export const getGlobalAnalytics = async (req, res, next) => {
         error: archetypeError.message,
       });
     }
-    console.log("[getGlobalAnalytics] RPC 'get_archetype_counts' successful.");
+
     archetypes = rpcData;
   } catch (rpcCatchError) {
     console.error(
@@ -35,7 +32,6 @@ export const getGlobalAnalytics = async (req, res, next) => {
   }
 
   try {
-    console.log("[getGlobalAnalytics] Fetching 'model_coefficients'...");
     const { data: modelData, error: modelError } = await supabase
       .from("model_coefficients")
       .select("model_name, coefficients, updated_at")
@@ -52,7 +48,7 @@ export const getGlobalAnalytics = async (req, res, next) => {
         error: modelError.message,
       });
     }
-    console.log("[getGlobalAnalytics] 'model_coefficients' fetch successful.");
+
     model = modelData;
   } catch (modelCatchError) {
     console.error(
@@ -65,7 +61,6 @@ export const getGlobalAnalytics = async (req, res, next) => {
     });
   }
 
-  console.log("[getGlobalAnalytics] Function Success. Sending 200 response.");
   res.status(200).json({ archetypes, winPredictor: model });
 };
 

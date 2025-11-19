@@ -89,7 +89,6 @@ const AwardsTab = ({ tournamentId }) => {
     try {
       const players = await api.getPlayerRankings(tournamentId);
 
-      // Filter for eligible players (played at least 60% of team games)
       const eligiblePlayers = players.filter((p) => {
         const teamGames = p.team.wins + p.team.losses;
         if (teamGames === 0) return false;
@@ -101,15 +100,12 @@ const AwardsTab = ({ tournamentId }) => {
         return;
       }
 
-      // Sort by ISU-PS (Player Score) descending
       const sortedPlayers = [...eligiblePlayers].sort(
         (a, b) => b.isu_ps - a.isu_ps
       );
 
-      // MVP is the top player
       const mvp = sortedPlayers[0];
 
-      // Mythical 5 are the top 5 players
       const mythical5 = sortedPlayers.slice(0, 5);
 
       setWinners({ mvp, mythical5 });
@@ -149,7 +145,6 @@ const AwardsTab = ({ tournamentId }) => {
 
   return (
     <div className='space-y-10'>
-      {/* MVP Section */}
       <div className='flex justify-center'>
         <div className='w-full max-w-md'>
           <h2 className='mb-6 flex items-center justify-center gap-2 text-center text-2xl font-bold text-foreground'>
@@ -167,7 +162,6 @@ const AwardsTab = ({ tournamentId }) => {
         </div>
       </div>
 
-      {/* Mythical 5 Section */}
       <div>
         <h2 className='mb-6 flex items-center gap-2 text-xl font-bold text-foreground'>
           <Icon name='groups' className='text-primary' /> The Mythical 5
@@ -184,7 +178,6 @@ const AwardsTab = ({ tournamentId }) => {
               value={player.isu_ps}
             />
           ))}
-          {/* Fill empty slots if less than 5 players */}
           {Array.from({
             length: Math.max(0, 5 - winners.mythical5.length),
           }).map((_, i) => (

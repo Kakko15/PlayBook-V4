@@ -33,7 +33,7 @@ export const passwordResetLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   keyGenerator: (req, res) => {
-    return req.body.email || req.ip; // Use email if available, fall back to IP
+    return req.body.email || req.ip;
   },
 });
 

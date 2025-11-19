@@ -38,7 +38,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initializeApp = async () => {
       try {
-        // Fetch CSRF token first
         await api.getHealth();
       } catch (error) {
         console.error('Failed to initialize session. CSRF might fail.', error);
@@ -90,7 +89,6 @@ export const AuthProvider = ({ children }) => {
           filter: `id=eq.${user.id}`,
         },
         (payload) => {
-          console.log('User delete event received', payload);
           toast.error('Your account has been deleted by an administrator.');
           setLogoutPath('/deleted');
           eventBus.dispatch('sessionEnded', { path: '/deleted' });
@@ -106,7 +104,6 @@ export const AuthProvider = ({ children }) => {
         },
         (payload) => {
           if (payload.new.status === 'suspended') {
-            console.log('User suspend event received', payload);
             toast.error('Your account has been suspended.');
             setLogoutPath('/suspended');
             eventBus.dispatch('sessionEnded', { path: '/suspended' });
@@ -139,7 +136,6 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    // Ensure CSRF token is fresh before login
     try {
       await api.getHealth();
     } catch (error) {

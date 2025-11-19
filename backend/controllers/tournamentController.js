@@ -579,29 +579,10 @@ export const generatePlayoffBracket = async (req, res, next) => {
       .json({ message: "Number of teams must be 4, 8, or 16." });
   }
 
-  try {
-    const { data: teams, error: teamsError } = await supabase
-      .from("teams")
-      .select("id")
-      .eq("tournament_id", tournament_id)
-      .order("wins", { ascending: false })
-      .order("elo_rating", { ascending: false })
-      .limit(numTeams);
-
-    if (teamsError) return next(teamsError);
-    if (teams.length < numTeams) {
-      return res
-        .status(400)
-        .json({ message: `Not enough teams for a ${numTeams}-team bracket.` });
-    }
-
-    res.status(200).json({
-      message:
-        "Please use the main Schedule tab to generate the tournament bracket.",
-    });
-  } catch (error) {
-    next(error);
-  }
+  res.status(200).json({
+    message:
+      "Please use the main Schedule tab to generate the tournament bracket.",
+  });
 };
 
 export const getSchedule = async (req, res, next) => {

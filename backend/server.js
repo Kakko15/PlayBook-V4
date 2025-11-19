@@ -40,7 +40,6 @@ const csrfProtection = csurf({
   },
   ignoreMethods: ["GET", "HEAD", "OPTIONS"],
   value: (req) => {
-    // Check multiple possible header names
     return (
       req.headers["x-xsrf-token"] ||
       req.headers["x-csrf-token"] ||

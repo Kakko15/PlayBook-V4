@@ -49,15 +49,12 @@ const UserManagementPage = () => {
   const [actionLoading, setActionLoading] = useState(null);
   const { user: currentUser } = useAuth();
 
-  // State for Rejecting a pending user
   const [userToReject, setUserToReject] = useState(null);
   const [isRejectAlertOpen, setIsRejectAlertOpen] = useState(false);
 
-  // State for Deleting an existing user
   const [userToDelete, setUserToDelete] = useState(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
 
-  // State for Resetting Password
   const [userToReset, setUserToReset] = useState(null);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
@@ -427,7 +424,7 @@ const UserManagementPage = () => {
                               }
                               className={cn(
                                 user.status === 'active'
-                                  ? 'focus:bg-destructive-container text-destructive focus:text-destructive'
+                                  ? 'text-destructive focus:bg-destructive-container focus:text-destructive'
                                   : 'text-green-600 focus:bg-green-100'
                               )}
                               disabled={user.id === currentUser.id}
@@ -456,7 +453,7 @@ const UserManagementPage = () => {
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => handleDeleteClick(user)}
-                              className='focus:bg-destructive-container text-destructive focus:text-destructive'
+                              className='text-destructive focus:bg-destructive-container focus:text-destructive'
                               disabled={user.id === currentUser.id}
                             >
                               <Icon name='delete' className='mr-2 text-lg' />

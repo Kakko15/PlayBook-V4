@@ -31,7 +31,6 @@ const DEPARTMENT_COLORS = {
   COM: '2c9103',
 };
 
-// Helper to determine sort order of rounds
 const getRoundRank = (roundName) => {
   const name = (roundName || '').toLowerCase();
   if (
@@ -61,7 +60,6 @@ const ScheduleTab = ({ tournamentId, game }) => {
     setIsLoading(true);
     try {
       const data = await api.getSchedule(tournamentId);
-      // Sort the data logically
       const sortedData = data.sort((a, b) => {
         const rankA = getRoundRank(a.round_name);
         const rankB = getRoundRank(b.round_name);
@@ -299,7 +297,6 @@ const MatchCard = ({ match, onLogResult, onFinalize, isFinalizing }) => {
         />
       </div>
 
-      {/* DATE AND VENUE FOOTER */}
       <div className='flex items-center justify-center gap-6 border-t border-border pt-3 text-sm text-muted-foreground'>
         <div className='flex items-center gap-2'>
           <Icon name='calendar_today' className='text-lg text-primary/70' />

@@ -1,5 +1,3 @@
-// Common animation variants for Framer Motion
-
 export const containerVariants = {
   hidden: { opacity: 0, y: 30 },
   show: {

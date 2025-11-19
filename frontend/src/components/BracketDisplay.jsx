@@ -79,8 +79,6 @@ const MatchCard = ({ match, onLogResult, isAdmin }) => {
 
 const BracketNode = ({ match, allMatches, onLogResult, isAdmin }) => {
   if (!match) return null;
-
-  // Find feeders
   const feeder1 = allMatches.find(
     (m) => m.next_match_id === match.id && m.winner_advances_to_slot === 'team1'
   );
@@ -105,7 +103,6 @@ const BracketNode = ({ match, allMatches, onLogResult, isAdmin }) => {
                 isAdmin={isAdmin}
               />
             ) : (
-              // Spacer for Bye/Direct Advance to maintain tree structure
               <div className='flex h-24 w-56 items-center justify-end pr-4'>
                 <span className='text-[10px] font-medium uppercase tracking-widest text-muted-foreground/40'>
                   Direct Advance
@@ -152,7 +149,6 @@ const BracketNode = ({ match, allMatches, onLogResult, isAdmin }) => {
 };
 
 const BracketDisplay = ({ matches, onLogResult, isAdmin = false }) => {
-  // Find the final match (root)
   const finalMatch =
     matches.find((m) => m.round_name === 'Finals') ||
     matches[matches.length - 1];

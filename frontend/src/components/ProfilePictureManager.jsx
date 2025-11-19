@@ -19,13 +19,9 @@ import Icon from './Icon';
 
 const MODEL_URL =
   'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@latest/model/';
-const MIN_HUMAN_AGE = 5; // AI must detect age as 5 or older
+const MIN_HUMAN_AGE = 5;
 
-const ProfilePictureManager = ({
-  isOpen,
-  onClose,
-  onSuccess, // This will now receive the base64 string or null
-}) => {
+const ProfilePictureManager = ({ isOpen, onClose, onSuccess }) => {
   const [image, setImage] = useState(null);
   const [scale, setScale] = useState(1.2);
   const [mode, setMode] = useState('main');
@@ -33,15 +29,13 @@ const ProfilePictureManager = ({
   const [modelsLoading, setModelsLoading] = useState(true);
   const editorRef = useRef(null);
   const fileInputRef = useRef(null);
-  const imageRef = useRef(null); // Ref for the image to be processed by face-api
+  const imageRef = useRef(null);
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-  // Load face-api.js models on component mount
   useEffect(() => {
     if (!isOpen) return;
     const loadModels = async () => {
-      // Ensure faceapi is loaded from the script tag in index.html
       if (typeof faceapi === 'undefined') {
         toast.error('Face detection library failed to load. Please refresh.');
         return;
@@ -80,9 +74,6 @@ const ProfilePictureManager = ({
     setMode('edit');
   };
 
-  /**
-   * Runs face detection on the selected image before saving.
-   */
   const runFaceDetection = async () => {
     if (!imageRef.current) {
       toast.error('Image element not found.');
@@ -94,7 +85,6 @@ const ProfilePictureManager = ({
       return false;
     }
 
-    // Ensure image is loaded before detection
     await new Promise((resolve, reject) => {
       if (imageRef.current.complete) {
         resolve();
@@ -114,9 +104,7 @@ const ProfilePictureManager = ({
     }
 
     const { age, gender } = detection;
-    console.log('Face Detection Result:', { age, gender });
 
-    // Strict validation
     if (!gender) {
       toast.error('Please upload a photo of a human face.');
       return false;
@@ -127,7 +115,6 @@ const ProfilePictureManager = ({
       return false;
     }
 
-    // All checks passed
     toast.success('Human face detected successfully.');
     return true;
   };
@@ -135,26 +122,22 @@ const ProfilePictureManager = ({
   const handleSave = async () => {
     if (editorRef.current && imageRef.current) {
       setIsLoading(true);
-
-      // First, run our strict client-side validation
       const isHuman = await runFaceDetection();
       if (!isHuman) {
         setIsLoading(false);
         return;
       }
 
-      // If validation passes, get the cropped image and pass to parent
       const canvas = editorRef.current.getImageScaledToCanvas();
       const imageBase64 = canvas.toDataURL('image/jpeg');
 
-      onSuccess(imageBase64); // Pass base64 string to parent
+      onSuccess(imageBase64);
       handleClose();
       setIsLoading(false);
     }
   };
 
   const handleRemove = async () => {
-    // Pass 'null' to parent to signal removal
     onSuccess(null);
     handleClose();
   };
@@ -166,13 +149,12 @@ const ProfilePictureManager = ({
     onClose();
   };
 
-  // Hidden image element for face-api.js to read from
   const HiddenImage = () => (
     <img
       ref={imageRef}
       src={image}
       alt='hidden-processing-img'
-      crossOrigin='anonymous' // Important for loading images into canvas
+      crossOrigin='anonymous'
       style={{ display: 'none' }}
     />
   );

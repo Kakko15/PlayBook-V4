@@ -39,22 +39,15 @@ const ParticleBackground = ({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       particles.forEach((p) => {
-        // Draw particle
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         ctx.fill();
-
-        // Update position
         p.x += p.vx;
         p.y += p.vy;
-
-        // Bounce off edges
         if (p.x - p.radius < 0 || p.x + p.radius > canvas.width) p.vx *= -1;
         if (p.y - p.radius < 0 || p.y + p.radius > canvas.height) p.vy *= -1;
       });
-
-      // Draw connections between nearby particles
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
@@ -82,16 +75,10 @@ const ParticleBackground = ({
       resizeCanvas();
       initParticles();
     };
-
-    // Initialize
     resizeCanvas();
     initParticles();
     animate();
-
-    // Event listeners
     window.addEventListener('resize', handleResize);
-
-    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
       if (animationFrameRef.current) {

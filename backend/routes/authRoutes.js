@@ -18,7 +18,6 @@ import {
   updateProfile,
   updateProfilePicture,
   removeProfilePicture,
-  detectFace,
 } from "../controllers/authController.js";
 import {
   loginLimiter,

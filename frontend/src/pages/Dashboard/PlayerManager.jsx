@@ -161,7 +161,6 @@ const PlayerManager = ({ isOpen, onClose, team }) => {
         onClose={() => setIsPlayerModalOpen(false)}
         onSuccess={() => {
           fetchPlayers();
-          // We also need to refresh the team count on the previous tab
         }}
         teamId={team?.id}
         player={selectedPlayer}

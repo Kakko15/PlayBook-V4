@@ -93,7 +93,7 @@ export const signup = async (req, res, next) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const tokenHash = hashToken(verificationToken);
-    const expiresAt = new Date(Date.now() + 24 * 3600000); // 24 hours
+    const expiresAt = new Date(Date.now() + 24 * 3600000);
 
     const { data: newUser, error: insertUserError } = await supabase
       .from("users")
@@ -101,7 +101,7 @@ export const signup = async (req, res, next) => {
         name: sanitize(name),
         email: sanitize(email),
         password_hash: passwordHash,
-        status: "pending", // User is pending email verification
+        status: "pending",
         role: "admin",
         email_verification_token: tokenHash,
         email_verification_expires: expiresAt.toISOString(),
@@ -212,7 +212,6 @@ export const verifyEmail = async (req, res, next) => {
 
     if (!user || new Date() > new Date(user.email_verification_expires)) {
       if (user) {
-        // Token is expired, delete user so they can sign up again
         await supabase.from("users").delete().eq("id", user.id);
       }
       return res
@@ -223,7 +222,7 @@ export const verifyEmail = async (req, res, next) => {
     const { error: updateError } = await supabase
       .from("users")
       .update({
-        status: "pending_approval", // Now awaiting admin approval
+        status: "pending_approval",
         email_verification_token: null,
         email_verification_expires: null,
       })
@@ -302,7 +301,7 @@ export const googleOAuth = async (req, res, next) => {
           name,
           email,
           google_id: googleId,
-          status: "pending_approval", // Auto-verified email
+          status: "pending_approval",
           role: "admin",
         })
         .select("id")
@@ -434,7 +433,7 @@ export const discordOAuth = async (req, res, next) => {
           name: username,
           email,
           discord_id: discordId,
-          status: "pending_approval", // Auto-verified email
+          status: "pending_approval",
           role: "admin",
         })
         .select("id")

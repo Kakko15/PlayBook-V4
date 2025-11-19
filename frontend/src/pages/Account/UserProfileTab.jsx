@@ -28,12 +28,10 @@ const profileSchema = z.object({
 });
 
 const UserProfileTab = () => {
-  const { user, profile, setProfile } = useAuth(); // Get setProfile from useAuth
+  const { user, profile, setProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isPfpModalOpen, setIsPfpModalOpen] = useState(false);
 
-  // This state holds the user's choice from the modal
-  // undefined = no change, null = remove, 'base64...' = update
   const [pendingProfilePicture, setPendingProfilePicture] = useState(undefined);
 
   const form = useForm({
@@ -42,7 +40,6 @@ const UserProfileTab = () => {
   });
 
   useEffect(() => {
-    // profile is now coming from AuthContext, no need to fetch
     if (profile) {
       form.reset({
         pronouns: profile.pronouns || '',
@@ -55,19 +52,15 @@ const UserProfileTab = () => {
   const onProfileSubmit = async (values) => {
     setIsLoading(true);
     try {
-      // 1. Update text fields
       await api.updateProfile(values);
       toast.success('Profile details saved!');
 
-      // 2. Check if the profile picture was changed
       if (pendingProfilePicture !== undefined) {
         if (pendingProfilePicture === null) {
-          // User chose to remove
           await api.removeProfilePicture();
           setProfile((prev) => ({ ...prev, profile_picture_url: null }));
           toast.success('Profile picture removed.');
         } else {
-          // User uploaded a new picture
           const { profilePictureUrl } = await api.updateProfilePicture(
             pendingProfilePicture
           );
@@ -79,7 +72,6 @@ const UserProfileTab = () => {
         }
       }
 
-      // 3. Reset pending state
       setPendingProfilePicture(undefined);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to update profile.');
@@ -97,14 +89,10 @@ const UserProfileTab = () => {
   };
 
   const onPfpSuccess = (newImageBase64) => {
-    // This is called by ProfilePictureManager when 'Apply' or 'Remove' is clicked
-    setPendingProfilePicture(newImageBase64); // This is now a base64 string or null
+    setPendingProfilePicture(newImageBase64);
     setIsPfpModalOpen(false);
   };
 
-  // This logic determines what image to show:
-  // 1. If pendingProfilePicture is set (not undefined), show that.
-  // 2. Otherwise, show the current profile picture from the auth context.
   const displayPicture =
     pendingProfilePicture !== undefined
       ? pendingProfilePicture
