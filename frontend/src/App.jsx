@@ -91,7 +91,7 @@ function App() {
   return (
     <ErrorBoundary>
       <SessionExpiredModal />
-      <AnimatePresence mode='wait'>
+      <AnimatePresence>
         <Routes location={location} key={location.pathname}>
           <Route
             path='/'

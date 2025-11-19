@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Logo from '@/components/Logo';
-import { Loader2, Mail, Smartphone, ArrowRight } from 'lucide-react';
+import { Loader2, Mail, Smartphone, ArrowRight, Clock } from 'lucide-react';
 import { OTP_LENGTH } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -20,6 +20,8 @@ const OtpVerifyPage = () => {
   const [method, setMethod] = useState('totp'); // 'totp' or 'email'
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(0); // seconds remaining
+  const timerRef = useRef(null);
 
   useEffect(() => {
     const storedEmail = sessionStorage.getItem('playbook-otp-email');
@@ -36,6 +38,27 @@ const OtpVerifyPage = () => {
     }
   }, [email]);
 
+  // Timer countdown effect
+  useEffect(() => {
+    if (timeRemaining > 0) {
+      timerRef.current = setInterval(() => {
+        setTimeRemaining((prev) => {
+          if (prev <= 1) {
+            clearInterval(timerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [timeRemaining]);
+
   const sendEmailCode = async () => {
     if (!email) return;
     setIsSendingEmail(true);
@@ -43,6 +66,7 @@ const OtpVerifyPage = () => {
       await api.generateOtpEmail(email);
       toast.success('Code sent to your email!');
       setEmailSent(true);
+      setTimeRemaining(600); // 10 minutes in seconds
       // Reset OTP input
       setOtp(new Array(OTP_LENGTH).fill(''));
       inputRefs.current[0]?.focus();
@@ -223,15 +247,41 @@ const OtpVerifyPage = () => {
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
-              className='mb-6 rounded-2xl bg-green-50 p-4 text-center'
+              className={cn(
+                'mb-6 rounded-2xl p-4 text-center transition-colors',
+                timeRemaining > 0 ? 'bg-green-50' : 'bg-red-50'
+              )}
             >
-              <p className='text-sm font-medium text-green-800'>
-                Code sent to {email}
+              <p
+                className={cn(
+                  'text-sm font-medium',
+                  timeRemaining > 0 ? 'text-green-800' : 'text-red-800'
+                )}
+              >
+                {timeRemaining > 0 ? (
+                  <>Code sent to {email}</>
+                ) : (
+                  <>Code expired. Please request a new one.</>
+                )}
               </p>
+              {timeRemaining > 0 && (
+                <div className='mt-2 flex items-center justify-center gap-1.5 text-sm font-medium text-green-700'>
+                  <Clock className='h-4 w-4' />
+                  <span>
+                    {Math.floor(timeRemaining / 60)}:
+                    {(timeRemaining % 60).toString().padStart(2, '0')}
+                  </span>
+                </div>
+              )}
               <button
                 onClick={sendEmailCode}
                 disabled={isSendingEmail}
-                className='mt-1 text-xs font-medium text-green-600 underline decoration-green-600/30 underline-offset-2 hover:text-green-700'
+                className={cn(
+                  'mt-1 text-xs font-medium underline underline-offset-2',
+                  timeRemaining > 0
+                    ? 'text-green-600 decoration-green-600/30 hover:text-green-700'
+                    : 'text-red-600 decoration-red-600/30 hover:text-red-700'
+                )}
               >
                 Resend Code
               </button>
