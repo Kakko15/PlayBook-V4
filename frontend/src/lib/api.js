@@ -435,8 +435,10 @@ const api = {
     return data;
   },
 
-  getAllActivity: async () => {
-    const { data } = await apiClient.get('/activity/all');
+  getAllActivity: async (page = 1, limit = 20) => {
+    const { data } = await apiClient.get(
+      `/activity/all?page=${page}&limit=${limit}`
+    );
     return data;
   },
 };

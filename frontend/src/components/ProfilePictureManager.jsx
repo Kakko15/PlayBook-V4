@@ -71,7 +71,7 @@ const ProfilePictureManager = ({ isOpen, onClose, onSuccess }) => {
 
   const handleWebcamCapture = (imageSrc) => {
     setImage(imageSrc);
-    setMode('edit');
+    setMode('preview');
   };
 
   const runFaceDetection = async () => {
@@ -159,6 +159,15 @@ const ProfilePictureManager = ({ isOpen, onClose, onSuccess }) => {
     />
   );
 
+  const handlePreviewConfirm = () => {
+    setMode('edit');
+  };
+
+  const handlePreviewRetake = () => {
+    setImage(null);
+    setMode('webcam');
+  };
+
   const renderContent = () => {
     switch (mode) {
       case 'edit':
@@ -213,6 +222,28 @@ const ProfilePictureManager = ({ isOpen, onClose, onSuccess }) => {
               </Button>
             </DialogFooter>
           </>
+        );
+      case 'preview':
+        return (
+          <div className='flex flex-col items-center space-y-4'>
+            <div className='overflow-hidden rounded-lg border'>
+              <img
+                src={image}
+                alt='Preview'
+                className='h-[400px] w-[400px] object-cover'
+              />
+            </div>
+            <div className='flex w-full justify-around'>
+              <Button variant='ghost' onClick={handlePreviewRetake}>
+                <Icon name='replay' className='mr-2' />
+                Retake Photo
+              </Button>
+              <Button onClick={handlePreviewConfirm}>
+                <Icon name='check' className='mr-2' />
+                Use Photo
+              </Button>
+            </div>
+          </div>
         );
       case 'webcam':
         return (
