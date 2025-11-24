@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '@/lib/api';
 import toast from 'react-hot-toast';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2, Users, Search } from 'lucide-react';
 import TeamCard from '@/components/TeamCard';
 import TeamModal from '@/components/TeamModal';
 import PlayerManager from './PlayerManager';
@@ -16,6 +16,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alertDialog';
 import { buttonVariants } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const TeamsTab = ({ tournamentId }) => {
   const [teams, setTeams] = useState([]);
@@ -25,6 +33,9 @@ const TeamsTab = ({ tournamentId }) => {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [teamToDelete, setTeamToDelete] = useState(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('name-asc');
 
   const fetchTeams = useCallback(async () => {
     setIsLoading(true);
@@ -71,6 +82,24 @@ const TeamsTab = ({ tournamentId }) => {
     }
   };
 
+  const filteredAndSortedTeams = teams
+    .filter((team) =>
+      team.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (sortOption) {
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'wins-desc':
+          return (b.wins || 0) - (a.wins || 0);
+        case 'elo-desc':
+          return (b.elo_rating || 0) - (a.elo_rating || 0);
+        case 'name-asc':
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+
   return (
     <>
       <div className='flex items-center justify-between'>
@@ -79,12 +108,35 @@ const TeamsTab = ({ tournamentId }) => {
         </h2>
       </div>
 
+      <div className='my-6 flex flex-col gap-4 md:flex-row md:items-center'>
+        <div className='relative flex-1'>
+          <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+          <Input
+            placeholder='Search teams...'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className='pl-9'
+          />
+        </div>
+        <Select value={sortOption} onValueChange={setSortOption}>
+          <SelectTrigger className='w-full md:w-[200px]'>
+            <SelectValue placeholder='Sort by' />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value='name-asc'>Name (A-Z)</SelectItem>
+            <SelectItem value='name-desc'>Name (Z-A)</SelectItem>
+            <SelectItem value='wins-desc'>Most Wins</SelectItem>
+            <SelectItem value='elo-desc'>Highest Elo</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className='mt-6'>
         {isLoading ? (
           <div className='flex h-64 w-full items-center justify-center'>
             <Loader2 className='h-8 w-8 animate-spin text-primary' />
           </div>
-        ) : teams.length === 0 ? (
+        ) : filteredAndSortedTeams.length === 0 ? (
           <div className='flex h-48 flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-card'>
             <Users className='h-12 w-12 text-muted-foreground' />
             <h3 className='mt-4 text-xl font-semibold text-foreground'>
@@ -93,7 +145,7 @@ const TeamsTab = ({ tournamentId }) => {
           </div>
         ) : (
           <div className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
-            {teams.map((team) => (
+            {filteredAndSortedTeams.map((team) => (
               <TeamCard
                 key={team.id}
                 team={team}

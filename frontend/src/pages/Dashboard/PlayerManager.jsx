@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus, User, Edit, Trash2 } from 'lucide-react';
+import { Loader2, Plus, User, Edit, Trash2, Search } from 'lucide-react';
 import PlayerModal from '@/components/PlayerModal';
 import {
   AlertDialog,
@@ -21,6 +21,14 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alertDialog';
 import { buttonVariants } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const PlayerManager = ({ isOpen, onClose, team }) => {
   const [players, setPlayers] = useState([]);
@@ -29,6 +37,9 @@ const PlayerManager = ({ isOpen, onClose, team }) => {
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedPlayer, setSelectedPlayer] = useState(null);
   const [playerToDelete, setPlayerToDelete] = useState(null);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('name-asc');
 
   const fetchPlayers = async () => {
     if (!team) return;
@@ -78,6 +89,20 @@ const PlayerManager = ({ isOpen, onClose, team }) => {
     }
   };
 
+  const filteredAndSortedPlayers = players
+    .filter((player) =>
+      player.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) => {
+      switch (sortOption) {
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'name-asc':
+        default:
+          return a.name.localeCompare(b.name);
+      }
+    });
+
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
@@ -96,6 +121,27 @@ const PlayerManager = ({ isOpen, onClose, team }) => {
               </Button>
             </div>
 
+            <div className='my-4 flex flex-col gap-4 md:flex-row md:items-center'>
+              <div className='relative flex-1'>
+                <Search className='absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground' />
+                <Input
+                  placeholder='Search players...'
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className='pl-9'
+                />
+              </div>
+              <Select value={sortOption} onValueChange={setSortOption}>
+                <SelectTrigger className='w-full md:w-[180px]'>
+                  <SelectValue placeholder='Sort by' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='name-asc'>Name (A-Z)</SelectItem>
+                  <SelectItem value='name-desc'>Name (Z-A)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className='mt-4 h-[400px] space-y-3 overflow-y-auto pr-2'>
               {isLoading ? (
                 <div className='flex h-full items-center justify-center'>
@@ -111,8 +157,16 @@ const PlayerManager = ({ isOpen, onClose, team }) => {
                     Click "Add Player" to build the roster.
                   </p>
                 </div>
+              ) : filteredAndSortedPlayers.length === 0 ? (
+                <div className='flex h-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-border'>
+                  <Search className='h-12 w-12 text-muted-foreground' />
+                  <h4 className='mt-4 font-semibold'>No players found</h4>
+                  <p className='text-sm text-muted-foreground'>
+                    Try adjusting your search terms.
+                  </p>
+                </div>
               ) : (
-                players.map((player) => (
+                filteredAndSortedPlayers.map((player) => (
                   <div
                     key={player.id}
                     className='flex items-center justify-between rounded-lg border border-border p-3'
