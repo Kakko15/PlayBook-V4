@@ -22,22 +22,7 @@ import {
 } from '@/components/ui/dropdownMenu';
 import Icon from '@/components/Icon';
 import DepartmentModal from '@/components/DepartmentModal';
-
-const listVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, x: -20 },
-  show: { opacity: 1, x: 0, transition: { type: 'spring', stiffness: 100 } },
-  exit: { opacity: 0, x: 20, transition: { duration: 0.2 } },
-};
+import SortableTable from '@/components/ui/SortableTable';
 
 const DepartmentManagementPage = () => {
   const [departments, setDepartments] = useState([]);
@@ -88,7 +73,9 @@ const DepartmentManagementPage = () => {
       toast.success('Department deleted successfully');
       fetchDepartments();
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to delete department');
+      toast.error(
+        error.response?.data?.message || 'Failed to delete department'
+      );
     } finally {
       setActionLoading(null);
       setDeptToDelete(null);
@@ -102,6 +89,74 @@ const DepartmentManagementPage = () => {
       </div>
     );
   }
+
+  const columns = [
+    {
+      key: 'name',
+      header: 'Name',
+      sortable: true,
+      filterable: true,
+      renderCell: (row) => (
+        <span className='font-medium text-foreground'>{row.name}</span>
+      ),
+    },
+    {
+      key: 'acronym',
+      header: 'Acronym',
+      sortable: true,
+      filterable: true,
+      renderCell: (row) => (
+        <span className='text-muted-foreground'>{row.acronym}</span>
+      ),
+    },
+    {
+      key: 'elo_rating',
+      header: 'Elo Rating',
+      sortable: true,
+      renderCell: (row) => (
+        <span className='text-muted-foreground'>{row.elo_rating}</span>
+      ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      className: 'text-right',
+      cellClassName: 'text-right',
+      renderCell: (row) => (
+        <div className='flex items-center justify-end'>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant='ghost'
+                size='icon'
+                className='h-8 w-8'
+                disabled={actionLoading === row.id}
+              >
+                {actionLoading === row.id ? (
+                  <Loader2 className='h-4 w-4 animate-spin' />
+                ) : (
+                  <Icon name='more_horiz' className='text-lg' />
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem onClick={() => handleEditClick(row)}>
+                <Icon name='edit' className='mr-2 text-lg' />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleDeleteClick(row)}
+                className='text-destructive focus:bg-destructive-container focus:text-destructive'
+              >
+                <Icon name='delete' className='mr-2 text-lg' />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className='p-8'>
@@ -120,92 +175,17 @@ const DepartmentManagementPage = () => {
         </Button>
       </div>
 
-      <div className='mt-8 rounded-lg border border-border bg-card p-6'>
+      <div className='mt-8'>
         <h2 className='mb-4 text-xl font-semibold text-foreground'>
           All Departments ({departments.length})
         </h2>
-        <div className='overflow-x-auto'>
-          <table className='w-full'>
-            <thead>
-              <tr className='border-b border-border'>
-                <th className='px-4 py-3 text-left font-medium text-muted-foreground'>
-                  Name
-                </th>
-                <th className='px-4 py-3 text-left font-medium text-muted-foreground'>
-                  Acronym
-                </th>
-                <th className='px-4 py-3 text-left font-medium text-muted-foreground'>
-                  Elo Rating
-                </th>
-                <th className='px-4 py-3 text-right font-medium text-muted-foreground'>
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <motion.tbody
-              variants={listVariants}
-              initial='hidden'
-              animate='show'
-            >
-              <AnimatePresence>
-                {departments.map((dept) => (
-                  <motion.tr
-                    key={dept.id}
-                    variants={itemVariants}
-                    layout
-                    exit='exit'
-                    className='border-b border-border last:border-b-0 hover:bg-muted/50'
-                  >
-                    <td className='px-4 py-3 font-medium text-foreground'>
-                      {dept.name}
-                    </td>
-                    <td className='px-4 py-3 text-muted-foreground'>
-                      {dept.acronym}
-                    </td>
-                    <td className='px-4 py-3 text-muted-foreground'>
-                      {dept.elo_rating}
-                    </td>
-                    <td className='px-4 py-3'>
-                      <div className='flex items-center justify-end'>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              variant='ghost'
-                              size='icon'
-                              className='h-8 w-8'
-                              disabled={actionLoading === dept.id}
-                            >
-                              {actionLoading === dept.id ? (
-                                <Loader2 className='h-4 w-4 animate-spin' />
-                              ) : (
-                                <Icon name='more_horiz' className='text-lg' />
-                              )}
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align='end'>
-                            <DropdownMenuItem
-                              onClick={() => handleEditClick(dept)}
-                            >
-                              <Icon name='edit' className='mr-2 text-lg' />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleDeleteClick(dept)}
-                              className='focus:bg-destructive-container text-destructive focus:text-destructive'
-                            >
-                              <Icon name='delete' className='mr-2 text-lg' />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </td>
-                  </motion.tr>
-                ))}
-              </AnimatePresence>
-            </motion.tbody>
-          </table>
-        </div>
+        <SortableTable
+          data={departments}
+          columns={columns}
+          defaultSortKey='name'
+          defaultSortOrder='asc'
+          emptyMessage='No departments found'
+        />
       </div>
 
       <DepartmentModal

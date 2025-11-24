@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import PickemMatchCard from '@/components/PickemMatchCard';
 import Icon from '@/components/Icon';
+import SortableTable from '@/components/ui/SortableTable';
 
 const PickemsTab = ({ tournamentId }) => {
   const [leaderboard, setLeaderboard] = useState([]);
@@ -60,6 +61,50 @@ const PickemsTab = ({ tournamentId }) => {
     );
   }
 
+  const leaderboardColumns = [
+    {
+      key: 'rank',
+      header: 'Rank',
+      sortable: true,
+      renderCell: (row, value, index) => (
+        <span className='font-medium text-foreground'>{index + 1}</span>
+      ),
+    },
+    {
+      key: 'name',
+      header: 'User',
+      sortable: true,
+      filterable: true,
+      renderCell: (row) => (
+        <span
+          className={cn(
+            'font-medium',
+            row.user_id === user.id ? 'text-primary' : 'text-foreground'
+          )}
+        >
+          {row.name}
+        </span>
+      ),
+    },
+    {
+      key: 'correct_picks',
+      header: 'Picks',
+      sortable: true,
+      renderCell: (row) => (
+        <span className='text-muted-foreground'>{row.correct_picks}</span>
+      ),
+    },
+    {
+      key: 'total_points',
+      header: 'Points',
+      sortable: true,
+      cellClassName: 'text-right',
+      renderCell: (row) => (
+        <span className='font-bold text-primary'>{row.total_points}</span>
+      ),
+    },
+  ];
+
   return (
     <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
       <div className='space-y-6 lg:col-span-2'>
@@ -94,58 +139,20 @@ const PickemsTab = ({ tournamentId }) => {
       </div>
 
       <div className='lg:col-span-1'>
-        <h2 className='text-2xl font-semibold text-foreground'>Leaderboard</h2>
-        <div className='mt-6 overflow-hidden rounded-lg border border-border'>
-          <table className='w-full'>
-            <thead className='bg-surface-variant'>
-              <tr>
-                <th className='px-4 py-3 text-left font-medium text-on-surface-variant'>
-                  Rank
-                </th>
-                <th className='px-4 py-3 text-left font-medium text-on-surface-variant'>
-                  User
-                </th>
-                <th className='px-4 py-3 text-left font-medium text-on-surface-variant'>
-                  Picks
-                </th>
-                <th className='px-4 py-3 text-right font-medium text-on-surface-variant'>
-                  Points
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {leaderboard.map((entry, index) => (
-                <tr
-                  key={entry.user_id}
-                  className={cn(
-                    'border-b border-border last:border-b-0',
-                    entry.user_id === user.id
-                      ? 'bg-primary-container'
-                      : 'hover:bg-muted/50'
-                  )}
-                >
-                  <td className='px-4 py-3 font-medium text-foreground'>
-                    {index + 1}
-                  </td>
-                  <td className='px-4 py-3 font-medium text-foreground'>
-                    {entry.name}
-                  </td>
-                  <td className='px-4 py-3 text-muted-foreground'>
-                    {entry.correct_picks}
-                  </td>
-                  <td className='px-4 py-3 text-right font-bold text-primary'>
-                    {entry.total_points}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {leaderboard.length === 0 && (
-            <div className='p-4 text-center text-muted-foreground'>
-              No predictions made yet.
-            </div>
-          )}
-        </div>
+        <h2 className='mb-6 text-2xl font-semibold text-foreground'>
+          Leaderboard
+        </h2>
+        <SortableTable
+          data={leaderboard.map((entry) => ({
+            ...entry,
+            rowClassName:
+              entry.user_id === user.id ? 'bg-primary-container' : '',
+          }))}
+          columns={leaderboardColumns}
+          defaultSortKey='total_points'
+          defaultSortOrder='desc'
+          emptyMessage='No predictions made yet.'
+        />
       </div>
     </div>
   );
