@@ -22,28 +22,30 @@ import {
 } from '@/components/ui/form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
-const isJsonString = (str) => {
-  try {
-    JSON.parse(str);
-  } catch (e) {
-    return false;
-  }
-  return true;
-};
+const POSITIONS = ['PG', 'SG', 'SF', 'PF', 'C'];
+const YEARS = ['1', '2', '3', '4', '5'];
 
 const formSchema = z.object({
-  name: z.string().min(2, {
-    message: 'Player name must be at least 2 characters.',
+  name: z.string().min(2, { message: 'Name is required.' }),
+  student_id: z.string().min(5, { message: 'Student ID is required.' }),
+  jersey: z.coerce.number().min(0).max(99).optional(),
+  year_level: z.enum(YEARS, {
+    required_error: 'Select year level.',
   }),
-  game_specific_data: z
-    .string()
-    .optional()
-    .refine((val) => val === '' || val === undefined || isJsonString(val), {
-      message: 'Must be a valid JSON object or empty.',
-    }),
+  course: z.string().min(2, { message: 'Course/Program is required.' }),
+  position: z.enum(POSITIONS, {
+    required_error: 'Select a primary position.',
+  }),
+  secondary_position: z.enum([...POSITIONS, 'none']).optional(),
 });
 
 const PlayerModal = ({ isOpen, onClose, onSuccess, teamId, player }) => {
@@ -54,34 +56,67 @@ const PlayerModal = ({ isOpen, onClose, onSuccess, teamId, player }) => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      game_specific_data: '',
+      student_id: '',
+      jersey: '',
+      year_level: '',
+      course: '',
+      position: '',
+      secondary_position: 'none',
     },
   });
 
+  // Watch the primary position to filter the secondary options
+  const primaryPosition = form.watch('position');
+
   useEffect(() => {
-    if (isEditMode && player) {
-      form.reset({
-        name: player.name,
-        game_specific_data: player.game_specific_data
-          ? JSON.stringify(player.game_specific_data, null, 2)
-          : '',
-      });
-    } else {
-      form.reset({
-        name: '',
-        game_specific_data: '',
-      });
+    if (isOpen) {
+      if (isEditMode && player) {
+        const gameData = player.game_specific_data || {};
+        form.reset({
+          name: player.name,
+          student_id: gameData.student_id || '',
+          jersey: gameData.jersey !== undefined ? gameData.jersey : '',
+          year_level: gameData.year_level || '',
+          course: gameData.course || '',
+          position: gameData.position || '',
+          secondary_position: gameData.secondary_position || 'none',
+        });
+      } else {
+        form.reset({
+          name: '',
+          student_id: '',
+          jersey: '',
+          year_level: '',
+          course: '',
+          position: '',
+          secondary_position: 'none',
+        });
+      }
     }
-  }, [isEditMode, player, form]);
+  }, [isOpen, isEditMode, player, form]);
 
   const onSubmit = async (values) => {
     setIsLoading(true);
+
+    const gameSpecificData = {
+      student_id: values.student_id,
+      jersey: values.jersey !== '' ? Number(values.jersey) : null,
+      year_level: values.year_level,
+      course: values.course,
+      position: values.position,
+      secondary_position:
+        values.secondary_position === 'none' ? null : values.secondary_position,
+    };
+
+    // Clean up nulls
+    Object.keys(gameSpecificData).forEach(
+      (key) => gameSpecificData[key] === null && delete gameSpecificData[key]
+    );
+
     const payload = {
       name: values.name,
       game_specific_data:
-        values.game_specific_data && values.game_specific_data.trim() !== ''
-          ? JSON.parse(values.game_specific_data)
-          : null,
+        Object.keys(gameSpecificData).length > 0 ? gameSpecificData : null,
     };
 
     try {
@@ -109,7 +144,7 @@ const PlayerModal = ({ isOpen, onClose, onSuccess, teamId, player }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className='sm:max-w-[425px]'>
+      <DialogContent className='sm:max-w-[500px]'>
         <DialogHeader>
           <DialogTitle>
             {isEditMode ? 'Edit Player' : 'Add New Player'}
@@ -123,17 +158,17 @@ const PlayerModal = ({ isOpen, onClose, onSuccess, teamId, player }) => {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            className='space-y-6 pt-4'
+            className='space-y-4 pt-2'
           >
             <FormField
               control={form.control}
               name='name'
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Player Name / IGN</FormLabel>
+                  <FormLabel>Player Name</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder='e.g., "PlayerOne"'
+                      placeholder='e.g., "Juan Dela Cruz"'
                       disabled={isLoading}
                       {...field}
                     />
@@ -142,26 +177,176 @@ const PlayerModal = ({ isOpen, onClose, onSuccess, teamId, player }) => {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name='game_specific_data'
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Game Specific Data (JSON)</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder='e.g., {"jersey": 10, "position": "PG"}'
-                      className='font-mono'
-                      rows={4}
+
+            <div className='grid grid-cols-2 gap-4'>
+              <FormField
+                control={form.control}
+                name='student_id'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Student ID No.</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder='e.g. 21-12345'
+                        disabled={isLoading}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='jersey'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Jersey No.</FormLabel>
+                    <FormControl>
+                      <Input
+                        type='number'
+                        placeholder='e.g. 23'
+                        disabled={isLoading}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className='grid grid-cols-3 gap-4'>
+              <div className='col-span-2'>
+                <FormField
+                  control={form.control}
+                  name='course'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Course / Program</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder='e.g. BS Civil Engineering'
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className='col-span-1'>
+                <FormField
+                  control={form.control}
+                  name='year_level'
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Year Level</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={isLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder='Year' />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {YEARS.map((year) => (
+                            <SelectItem key={year} value={year}>
+                              {year}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <div className='grid grid-cols-2 gap-4'>
+              <FormField
+                control={form.control}
+                name='position'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Primary Position</FormLabel>
+                    <Select
+                      onValueChange={(val) => {
+                        field.onChange(val);
+                        // If primary equals secondary, reset secondary
+                        if (val === form.getValues('secondary_position')) {
+                          form.setValue('secondary_position', 'none');
+                        }
+                      }}
+                      value={field.value}
                       disabled={isLoading}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='Select...' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {POSITIONS.map((pos) => (
+                          <SelectItem key={pos} value={pos}>
+                            {pos}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='secondary_position'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>2nd Position (Optional)</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={isLoading || !primaryPosition}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder='None' />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem
+                          value='none'
+                          className='text-muted-foreground'
+                        >
+                          None
+                        </SelectItem>
+                        {POSITIONS.map((pos) => (
+                          <SelectItem
+                            key={pos}
+                            value={pos}
+                            disabled={pos === primaryPosition}
+                            className={pos === primaryPosition ? 'hidden' : ''}
+                          >
+                            {pos}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <DialogFooter className='pt-4'>
               <Button
                 type='button'
                 variant='outline'
