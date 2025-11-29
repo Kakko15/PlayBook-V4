@@ -23,7 +23,6 @@ import {
 } from '@/components/ui/dropdownMenu';
 import Icon from '@/components/Icon';
 import { cn } from '@/lib/utils';
-import ResetPasswordModal from '@/components/ResetPasswordModal';
 import { useAuth } from '@/hooks/useAuth';
 
 const listVariants = {
@@ -54,9 +53,6 @@ const UserManagementPage = () => {
 
   const [userToDelete, setUserToDelete] = useState(null);
   const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState(false);
-
-  const [userToReset, setUserToReset] = useState(null);
-  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -186,11 +182,6 @@ const UserManagementPage = () => {
       setActionLoading(null);
       setUserToDelete(null);
     }
-  };
-
-  const handleResetPasswordClick = (user) => {
-    setUserToReset(user);
-    setIsResetModalOpen(true);
   };
 
   if (loading && users.length === 0) {
@@ -441,15 +432,7 @@ const UserManagementPage = () => {
                                 ? 'Suspend Account'
                                 : 'Activate Account'}
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleResetPasswordClick(user)}
-                            >
-                              <Icon
-                                name='lock_reset'
-                                className='mr-2 text-lg'
-                              />
-                              Reset Password
-                            </DropdownMenuItem>
+
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => handleDeleteClick(user)}
@@ -518,12 +501,6 @@ const UserManagementPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
-      <ResetPasswordModal
-        isOpen={isResetModalOpen}
-        onClose={() => setIsResetModalOpen(false)}
-        user={userToReset}
-      />
     </div>
   );
 };
