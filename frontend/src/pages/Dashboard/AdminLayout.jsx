@@ -218,7 +218,10 @@ const AdminLayout = () => {
                   <DropdownMenuPortal>
                     <DropdownMenuSubContent className='w-40 p-1'>
                       <DropdownMenuItem
-                        onClick={() => setTheme('light')}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setTheme('light');
+                        }}
                         className='cursor-pointer rounded-sm'
                       >
                         <Icon name='light_mode' className='mr-2 h-4 w-4' />
@@ -228,7 +231,10 @@ const AdminLayout = () => {
                         )}
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => setTheme('dark')}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setTheme('dark');
+                        }}
                         className='cursor-pointer rounded-sm'
                       >
                         <Icon name='dark_mode' className='mr-2 h-4 w-4' />
@@ -238,7 +244,10 @@ const AdminLayout = () => {
                         )}
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => setTheme('system')}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setTheme('system');
+                        }}
                         className='cursor-pointer rounded-sm'
                       >
                         <Icon name='laptop' className='mr-2 h-4 w-4' />
